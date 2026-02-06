@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Higher or Lower - Design Concepts",
-  description: "Five unique front-end design concepts for the Higher or Lower multiplayer game",
+  title: "Higher or Lower",
+  description: "The refined art of prediction. Outlast your rivals in the ultimate game of intuition.",
 };
 
 export default function RootLayout({
