@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HigherLower | Neon Night</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Manrope:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07070f;
+        --panel: rgba(16, 18, 32, 0.92);
+        --accent: #67f5ff;
+        --accent-2: #a074ff;
+        --text: #f4f5ff;
+        --muted: #a2a5c4;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        background: radial-gradient(circle at top, #141432 0%, var(--bg) 55%, #040408 100%);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .shell {
+        width: min(1200px, 92vw);
+        margin: 0 auto;
+        padding: 32px 0 60px;
+        display: grid;
+        gap: 24px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        font-family: "Manrope", system-ui, sans-serif;
+        font-size: 1.5rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .status {
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(103, 245, 255, 0.4);
+        color: var(--accent);
+        font-weight: 600;
+        background: rgba(103, 245, 255, 0.08);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+        gap: 22px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: 20px;
+        padding: 22px;
+        border: 1px solid rgba(103, 245, 255, 0.12);
+        box-shadow: 0 0 0 1px rgba(160, 116, 255, 0.15), 0 28px 40px rgba(0, 0, 0, 0.45);
+      }
+
+      .hero h1 {
+        margin: 0 0 12px;
+        font-family: "Manrope", system-ui, sans-serif;
+        font-size: clamp(2.3rem, 3vw, 3rem);
+      }
+
+      .hero p {
+        margin: 0 0 24px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-weight: 600;
+        border: 1px solid transparent;
+        cursor: pointer;
+        font-size: 0.95rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #041016;
+        box-shadow: 0 12px 30px rgba(103, 245, 255, 0.2);
+      }
+
+      .btn-secondary {
+        background: transparent;
+        border-color: rgba(160, 116, 255, 0.4);
+        color: var(--text);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .btn:focus-visible {
+        outline: 3px solid rgba(103, 245, 255, 0.45);
+        outline-offset: 2px;
+      }
+
+      .round-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .number {
+        font-family: "Manrope", system-ui, sans-serif;
+        font-size: 4rem;
+        margin: 12px 0;
+      }
+
+      .guess-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+      }
+
+      .guess {
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(103, 245, 255, 0.2);
+        background: rgba(8, 9, 18, 0.7);
+      }
+
+      .guess strong {
+        display: block;
+        font-size: 1.1rem;
+      }
+
+      .list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .list-item {
+        padding: 12px 16px;
+        border-radius: 14px;
+        background: rgba(10, 12, 24, 0.9);
+        border: 1px solid rgba(160, 116, 255, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      @media (max-width: 960px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand">HigherLower</div>
+        <div class="status">Session Live · 09:41</div>
+      </header>
+
+      <div class="grid">
+        <section class="panel hero">
+          <h1>Neon focus for live rooms.</h1>
+          <p>
+            The host steers the pace while every player locks in their guess.
+            Intense contrast, sharp cards, and a leaderboard that updates in
+            real time.
+          </p>
+          <div class="actions">
+            <button class="btn btn-primary">Start Host Console</button>
+            <button class="btn btn-secondary">Join with Code</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="round-info">
+            <span>Round 7</span>
+            <span>15 players</span>
+            <span>Timer: 22s</span>
+          </div>
+          <div class="number">68</div>
+          <div class="guess-grid">
+            <div class="guess">
+              <strong>Higher</strong>
+              <span>Risk the rise</span>
+            </div>
+            <div class="guess">
+              <strong>Lower</strong>
+              <span>Play it cool</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="round-info">
+          <span>Leaderboard</span>
+          <span>Top 5</span>
+        </div>
+        <div class="list">
+          <div class="list-item">
+            <strong>Orion</strong>
+            <span>9 correct</span>
+          </div>
+          <div class="list-item">
+            <strong>Juno</strong>
+            <span>8 correct</span>
+          </div>
+          <div class="list-item">
+            <strong>Nyx</strong>
+            <span>7 correct</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

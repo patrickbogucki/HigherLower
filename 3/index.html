@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HigherLower | Playful Pastel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --peach: #ffd6cc;
+        --mint: #c7f5ea;
+        --sky: #c5d9ff;
+        --berry: #ff7aa2;
+        --text: #2a2240;
+        --muted: #5f5675;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Nunito", system-ui, sans-serif;
+        background: linear-gradient(160deg, var(--peach), var(--mint), var(--sky));
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .wrapper {
+        width: min(1150px, 92vw);
+        margin: 0 auto;
+        padding: 34px 0 64px;
+        display: grid;
+        gap: 24px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .logo {
+        font-family: "Fredoka", system-ui, sans-serif;
+        font-size: 1.6rem;
+      }
+
+      .badge {
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-weight: 600;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 20px;
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.78);
+        border-radius: 24px;
+        padding: 22px;
+        box-shadow: 0 20px 40px rgba(42, 34, 64, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+      }
+
+      .card h1 {
+        font-family: "Fredoka", system-ui, sans-serif;
+        margin: 0 0 12px;
+        font-size: clamp(2.2rem, 3.2vw, 3rem);
+      }
+
+      .card p {
+        margin: 0 0 20px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 16px;
+        padding: 12px 18px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn-primary {
+        background: var(--berry);
+        color: #fff;
+        box-shadow: 0 12px 25px rgba(255, 122, 162, 0.3);
+      }
+
+      .btn-alt {
+        background: #fff;
+        color: var(--text);
+        border: 1px solid rgba(255, 122, 162, 0.4);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .btn:focus-visible {
+        outline: 3px solid rgba(255, 122, 162, 0.4);
+        outline-offset: 2px;
+      }
+
+      .round {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .number {
+        font-family: "Fredoka", system-ui, sans-serif;
+        font-size: 3.4rem;
+        margin: 16px 0;
+      }
+
+      .pill-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+      }
+
+      .pill {
+        padding: 12px;
+        border-radius: 18px;
+        background: #fff;
+        border: 1px dashed rgba(42, 34, 64, 0.2);
+      }
+
+      .pill strong {
+        display: block;
+      }
+
+      .list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.85);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <div class="logo">HigherLower</div>
+        <div class="badge">Room 920 776 · Cozy Mode</div>
+      </header>
+
+      <div class="layout">
+        <section class="card">
+          <h1>Playful guesses, shared cheers.</h1>
+          <p>
+            Invite friends, tap higher or lower, and ride the pastel waves of a
+            live guessing game.
+          </p>
+          <div class="actions">
+            <button class="btn btn-primary">Host a Game</button>
+            <button class="btn btn-alt">Join with Code</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="round">
+            <span>Round 3</span>
+            <span>11 still in</span>
+            <span>Timer: 25s</span>
+          </div>
+          <div class="number">17</div>
+          <div class="pill-grid">
+            <div class="pill">
+              <strong>Higher</strong>
+              <span>Going up!</span>
+            </div>
+            <div class="pill">
+              <strong>Lower</strong>
+              <span>Slide down</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="round">
+            <span>Leaderboard</span>
+            <span>Live</span>
+          </div>
+          <div class="list">
+            <div class="list-item">
+              <strong>Piper</strong>
+              <span>5 correct</span>
+            </div>
+            <div class="list-item">
+              <strong>Sunny</strong>
+              <span>4 correct</span>
+            </div>
+            <div class="list-item">
+              <strong>Rowan</strong>
+              <span>4 correct</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
