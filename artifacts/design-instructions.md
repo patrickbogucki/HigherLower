@@ -9,7 +9,7 @@ These guidelines describe how AI tools should design the Higher/Lower app.
 
 ## Color
 - Use a light, uplifting palette with one vibrant accent.
-- Avoid harsh contrast and neon saturation.
+- Avoid neon saturation; use contrast that still meets WCAG AA for text and key UI.
 - Gradients are allowed but should be subtle and purposeful.
 
 ## Layout
