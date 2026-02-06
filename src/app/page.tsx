@@ -8,6 +8,7 @@ export default function Home() {
   const [showJoin, setShowJoin] = useState(false);
 
   useEffect(() => {
+    // Intentionally setting state on mount for animation purposes
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
