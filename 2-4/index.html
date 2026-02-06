@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HigherLower | Neon Orbit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Manrope:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #05060d;
+        --panel: rgba(12, 14, 26, 0.92);
+        --accent: #ffaf3f;
+        --accent-2: #6f4dff;
+        --text: #f4f6ff;
+        --muted: #a2a9c7;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        background: radial-gradient(circle at top left, #2a1d3f 0%, var(--bg) 55%, #030308 100%);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .shell {
+        width: min(1200px, 92vw);
+        margin: 0 auto;
+        padding: 32px 0 64px;
+        display: grid;
+        gap: 24px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        font-family: "Manrope", system-ui, sans-serif;
+        font-size: 1.5rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .status {
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 175, 63, 0.45);
+        color: var(--accent);
+        font-weight: 600;
+        background: rgba(255, 175, 63, 0.12);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.35fr) minmax(0, 0.65fr);
+        gap: 22px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid rgba(111, 77, 255, 0.2);
+        box-shadow: 0 22px 40px rgba(0, 0, 0, 0.45);
+      }
+
+      .nav {
+        display: grid;
+        gap: 12px;
+      }
+
+      .nav-item {
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 175, 63, 0.2);
+        background: rgba(8, 10, 20, 0.8);
+        font-weight: 600;
+      }
+
+      .hero h1 {
+        margin: 0 0 12px;
+        font-family: "Manrope", system-ui, sans-serif;
+        font-size: clamp(2.2rem, 3vw, 3rem);
+      }
+
+      .hero p {
+        margin: 0 0 20px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-weight: 600;
+        border: 1px solid transparent;
+        cursor: pointer;
+        font-size: 0.95rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #120a00;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        border-color: rgba(111, 77, 255, 0.5);
+        color: var(--text);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .btn:focus-visible {
+        outline: 3px solid rgba(255, 175, 63, 0.45);
+        outline-offset: 2px;
+      }
+
+      .round-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .number {
+        font-family: "Manrope", system-ui, sans-serif;
+        font-size: 3.8rem;
+        margin: 10px 0;
+      }
+
+      .guess-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+      }
+
+      .guess {
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 175, 63, 0.25);
+        background: rgba(7, 9, 20, 0.75);
+      }
+
+      .guess strong {
+        display: block;
+        font-size: 1.1rem;
+      }
+
+      @media (max-width: 980px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand">HigherLower</div>
+        <div class="status">Orbit Room · 11:05</div>
+      </header>
+
+      <div class="grid">
+        <section class="panel">
+          <div class="nav">
+            <div class="nav-item">Live Lobby</div>
+            <div class="nav-item">Round Status</div>
+            <div class="nav-item">Leaderboard</div>
+            <div class="nav-item">Host Tools</div>
+          </div>
+        </section>
+
+        <section class="panel hero">
+          <h1>Orbital focus, zero noise.</h1>
+          <p>
+            Keep the host controls close and the number front-and-center. This
+            layout orbits around the live guess with bold neon contrast.
+          </p>
+          <div class="actions">
+            <button class="btn btn-primary">Start Host Console</button>
+            <button class="btn btn-secondary">Join as Player</button>
+          </div>
+          <div class="round-info">
+            <span>Round 10</span>
+            <span>Timer: 18s</span>
+            <span>20 players</span>
+          </div>
+          <div class="number">93</div>
+          <div class="guess-grid">
+            <div class="guess">
+              <strong>Higher</strong>
+              <span>Lift off</span>
+            </div>
+            <div class="guess">
+              <strong>Lower</strong>
+              <span>Re-entry</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
