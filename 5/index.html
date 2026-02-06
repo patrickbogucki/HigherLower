@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HigherLower | Future Grid</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0b12;
+        --grid: rgba(255, 255, 255, 0.06);
+        --panel: rgba(18, 20, 32, 0.92);
+        --accent: #3bfbb8;
+        --accent-2: #3f7cff;
+        --text: #f4f7ff;
+        --muted: #9aa3c7;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Mono", system-ui, monospace;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        position: relative;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+        opacity: 0.4;
+      }
+
+      .frame {
+        width: min(1200px, 92vw);
+        margin: 0 auto;
+        padding: 36px 0 70px;
+        display: grid;
+        gap: 24px;
+        position: relative;
+        z-index: 1;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .logo {
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 1.6rem;
+      }
+
+      .chip {
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(59, 251, 184, 0.5);
+        color: var(--accent);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        gap: 20px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: 18px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      }
+
+      h1 {
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: clamp(2.3rem, 3vw, 3.2rem);
+        margin: 0 0 12px;
+      }
+
+      p {
+        margin: 0 0 22px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        border-radius: 12px;
+        border: 1px solid transparent;
+        padding: 12px 18px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.95rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #020812;
+      }
+
+      .btn-outline {
+        background: transparent;
+        border-color: rgba(63, 124, 255, 0.5);
+        color: var(--text);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(63, 124, 255, 0.25);
+      }
+
+      .btn:focus-visible {
+        outline: 3px solid rgba(59, 251, 184, 0.4);
+        outline-offset: 2px;
+      }
+
+      .round {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .number {
+        font-family: "Syne", system-ui, sans-serif;
+        font-size: 3.8rem;
+        margin: 12px 0;
+      }
+
+      .choice-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+      }
+
+      .choice {
+        border-radius: 14px;
+        padding: 12px;
+        border: 1px solid rgba(59, 251, 184, 0.3);
+        background: rgba(10, 12, 24, 0.7);
+      }
+
+      .list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .list-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      @media (max-width: 980px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <header>
+        <div class="logo">HigherLower</div>
+        <div class="chip">System Code: 341 887</div>
+      </header>
+
+      <div class="layout">
+        <section class="panel">
+          <h1>Predict the shift.</h1>
+          <p>
+            A futuristic grid interface for fast rounds, instant feedback, and
+            crystal-clear status for every player in the room.
+          </p>
+          <div class="actions">
+            <button class="btn btn-primary">Launch Host</button>
+            <button class="btn btn-outline">Join a Session</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="round">
+            <span>Round 9</span>
+            <span>Timer 14s</span>
+            <span>18 players</span>
+          </div>
+          <div class="number">91</div>
+          <div class="choice-grid">
+            <div class="choice">
+              <strong>Higher</strong>
+              <div>Momentum surge</div>
+            </div>
+            <div class="choice">
+              <strong>Lower</strong>
+              <div>Gravity pull</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="round">
+          <span>Leaderboard</span>
+          <span>Status: Live</span>
+        </div>
+        <div class="list">
+          <div class="list-item">
+            <strong>Vega</strong>
+            <span>10 wins</span>
+          </div>
+          <div class="list-item">
+            <strong>Nova</strong>
+            <span>9 wins</span>
+          </div>
+          <div class="list-item">
+            <strong>Talon</strong>
+            <span>8 wins</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

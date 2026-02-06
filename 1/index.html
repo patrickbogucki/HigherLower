@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HigherLower | Aurora Glow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f6ff;
+        --card: rgba(255, 255, 255, 0.78);
+        --accent: #5f5bff;
+        --accent-strong: #3129d8;
+        --text: #151433;
+        --muted: #5d5d7a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+        background: radial-gradient(circle at top left, #ffffff 0%, var(--bg) 45%, #e1e4ff 100%);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .page {
+        width: min(1100px, 92vw);
+        margin: 0 auto;
+        padding: 32px 0 60px;
+        display: grid;
+        gap: 32px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .logo {
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        font-size: 1.4rem;
+      }
+
+      .pill {
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: rgba(95, 91, 255, 0.12);
+        color: var(--accent-strong);
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 28px;
+        align-items: center;
+      }
+
+      .hero h1 {
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        font-size: clamp(2.4rem, 4vw, 3.3rem);
+        margin: 0 0 12px;
+      }
+
+      .hero p {
+        color: var(--muted);
+        line-height: 1.6;
+        margin: 0 0 24px;
+      }
+
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 14px;
+        padding: 14px 20px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 14px 30px rgba(95, 91, 255, 0.25);
+      }
+
+      .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(95, 91, 255, 0.4);
+        color: var(--accent-strong);
+      }
+
+      .btn:focus-visible {
+        outline: 3px solid rgba(95, 91, 255, 0.45);
+        outline-offset: 2px;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .glass {
+        background: var(--card);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 30px 60px rgba(32, 33, 63, 0.14);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
+
+      .round {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .round h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--muted);
+      }
+
+      .number {
+        font-size: 3.5rem;
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        margin: 12px 0;
+      }
+
+      .choices {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+      }
+
+      .choice {
+        border-radius: 18px;
+        border: 1px solid rgba(95, 91, 255, 0.3);
+        padding: 16px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .choice strong {
+        font-size: 1.1rem;
+      }
+
+      .choice:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 32px rgba(50, 50, 120, 0.16);
+      }
+
+      .leaderboard {
+        display: grid;
+        gap: 12px;
+      }
+
+      .leader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      .leader span {
+        color: var(--muted);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="logo">HigherLower Live</div>
+        <div class="pill">Room code: 482 190</div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <h1>Make every guess glow.</h1>
+          <p>
+            A radiant, live experience where the host leads the room and players
+            decide if the next number climbs higher or falls lower.
+          </p>
+          <div class="cta-row">
+            <button class="btn btn-primary">Start as Host</button>
+            <button class="btn btn-outline">Join as Player</button>
+          </div>
+        </div>
+
+        <div class="glass">
+          <div class="round">
+            <h2>Round 4 · 12 players left</h2>
+            <span class="pill">Timer: 18s</span>
+          </div>
+          <div class="number">42</div>
+          <div class="choices">
+            <div class="choice">
+              <strong>Higher</strong>
+              <span>Take the leap upward</span>
+            </div>
+            <div class="choice">
+              <strong>Lower</strong>
+              <span>Trust the drop</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass leaderboard">
+        <div class="round">
+          <h2>Leaderboard</h2>
+          <span class="pill">Live</span>
+        </div>
+        <div class="leader">
+          <strong>Nova</strong>
+          <span>8 correct</span>
+        </div>
+        <div class="leader">
+          <strong>Atlas</strong>
+          <span>7 correct</span>
+        </div>
+        <div class="leader">
+          <strong>Skye</strong>
+          <span>6 correct</span>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

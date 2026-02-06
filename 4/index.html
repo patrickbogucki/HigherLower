@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HigherLower | Editorial Minimal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Domine:wght@500;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --text: #111116;
+        --muted: #5d5c6a;
+        --accent: #d94d39;
+        --bg: #fbfaf8;
+        --line: #e6e2dc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .page {
+        width: min(1080px, 92vw);
+        margin: 0 auto;
+        padding: 48px 0 72px;
+        display: grid;
+        gap: 32px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
+      }
+
+      h1 {
+        font-family: "Domine", serif;
+        font-size: clamp(2.6rem, 3.8vw, 3.6rem);
+        margin: 0 0 18px;
+      }
+
+      p {
+        margin: 0 0 28px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        border: 1px solid var(--text);
+        padding: 12px 18px;
+        font-weight: 600;
+        border-radius: 0;
+        background: transparent;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+
+      .btn-primary {
+        background: var(--text);
+        color: #fff;
+      }
+
+      .btn-accent {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .btn:focus-visible {
+        outline: 3px solid rgba(217, 77, 57, 0.4);
+        outline-offset: 2px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        padding: 18px;
+        min-height: 150px;
+      }
+
+      .panel h2 {
+        margin: 0 0 10px;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .stat {
+        font-family: "Domine", serif;
+        font-size: 2.6rem;
+        margin: 0;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .list-item {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 6px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <span>HigherLower Live</span>
+        <span>Room 550 114</span>
+      </header>
+
+      <section class="hero">
+        <div>
+          <h1>Higher or Lower, distilled.</h1>
+          <p>
+            An editorial, print-inspired layout that keeps attention on the
+            number, the choice, and the leaderboard.
+          </p>
+          <div class="cta">
+            <button class="btn btn-primary">Start as Host</button>
+            <button class="btn btn-accent">Join as Player</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Current Round</h2>
+          <p class="stat">52</p>
+          <p>Round 6 · 14 remaining · Timer 19s</p>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <h2>Make a Guess</h2>
+          <p><strong>Higher</strong> or <strong>Lower</strong>?</p>
+          <p>Choose once — lock it in.</p>
+        </div>
+        <div class="panel">
+          <h2>Leaderboard</h2>
+          <div class="list">
+            <div class="list-item">
+              <span>Mae</span>
+              <span>7</span>
+            </div>
+            <div class="list-item">
+              <span>Jules</span>
+              <span>6</span>
+            </div>
+            <div class="list-item">
+              <span>Ari</span>
+              <span>6</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Host Notes</h2>
+          <p>Announce the next number and confirm the answer.</p>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
