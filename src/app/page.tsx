@@ -203,7 +203,10 @@ export default function Home() {
         .slice(6, 8)
         .join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10, 16).join("")}`;
     }
-    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const fallbackRandom = Array.from({ length: 3 })
+      .map(() => Math.random().toString(16).slice(2))
+      .join("");
+    return `${Date.now().toString(16)}-${fallbackRandom}`;
   };
 
   const handleCreateGame = () => {
