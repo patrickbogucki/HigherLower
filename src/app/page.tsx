@@ -32,6 +32,9 @@ type Session = { role: "host" } | { role: "player"; playerId: string };
 
 const GAME_KEY = "higherlower:game";
 const SESSION_KEY = "higherlower:session";
+const GAME_CODE_LENGTH = 6;
+const TIMER_DURATION_MS = 30000;
+const JOIN_PANEL_MAX_HEIGHT = 200;
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -186,8 +189,25 @@ export default function Home() {
     setCodeValue("");
   };
 
+  const createPlayerId = () => {
+    const cryptoApi = typeof window !== "undefined" ? window.crypto : undefined;
+    if (cryptoApi?.randomUUID) {
+      return cryptoApi.randomUUID();
+    }
+    if (cryptoApi?.getRandomValues) {
+      return Array.from(cryptoApi.getRandomValues(new Uint8Array(16)))
+        .map((byte, index) =>
+          (index === 6 ? (byte & 0x0f) | 0x40 : byte).toString(16).padStart(2, "0")
+        )
+        .join("");
+    }
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  };
+
   const handleCreateGame = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const min = 10 ** (GAME_CODE_LENGTH - 1);
+    const max = 10 ** GAME_CODE_LENGTH;
+    const code = Math.floor(min + Math.random() * (max - min)).toString();
     const newGame: GameState = {
       code,
       stage: "lobby",
@@ -234,10 +254,7 @@ export default function Home() {
       setJoinError("Add a display name before joining.");
       return;
     }
-    const newId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const newId = createPlayerId();
     const existingPlayer = gameState.players.find((player) => player.name === trimmedName);
     const playerId = existingPlayer?.id ?? newId;
     const newPlayer: Player = {
@@ -281,7 +298,7 @@ export default function Home() {
       round: nextRound,
       currentNumber: currentValue,
       nextNumber: null,
-      timerEndTime: gameState.timerEnabled ? Date.now() + 30000 : null,
+      timerEndTime: gameState.timerEnabled ? Date.now() + TIMER_DURATION_MS : null,
       players: updatedPlayers,
       lastAnswer: null,
       lastMessage: null,
@@ -613,7 +630,7 @@ export default function Home() {
         }
 
         .join-panel {
-          max-height: ${showJoin ? "200px" : "0"};
+          max-height: ${showJoin ? `${JOIN_PANEL_MAX_HEIGHT}px` : "0"};
           overflow: hidden;
           transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
           width: 100%;
@@ -1095,10 +1112,12 @@ export default function Home() {
                           type="text"
                           className="input-gold"
                           placeholder="Game Code"
-                          maxLength={6}
+                        maxLength={GAME_CODE_LENGTH}
                           value={codeValue}
                           onChange={(e) =>
-                            setCodeValue(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))
+                          setCodeValue(
+                            e.target.value.replace(/[^0-9]/g, "").slice(0, GAME_CODE_LENGTH)
+                          )
                           }
                           aria-label="Enter 6-digit game code"
                         />
