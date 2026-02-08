@@ -1,8 +1,6 @@
 ### Description
 
-A web-based multiplayer guessing game where players predict whether the next number will be higher or lower than the current number. The app generates the numbers, shows the current number to all participants, and the host announces it out loud in a live group setting.
-
-**Number Generation:** The app randomly generates an integer for each round. If the newly generated number matches the current number, the app re-rolls so each round has a clear higher/lower outcome.
+A web-based multiplayer guessing game where players predict whether the next number will be higher or lower than the current number. Numbers are provided by the host (from their own source or set manually) and announced out loud in a live group setting.
 
 ### Game Setup
 
@@ -13,7 +11,7 @@ A web-based multiplayer guessing game where players predict whether the next num
 
 All participants set their display names. Once everyone has joined, the host starts the game. Joining is locked once the game begins.
 
-**Optional Timer:** The host has the option to set a 30-second timer at the start of each round. When enabled, the timer starts when the host opens guessing and auto-locks guesses when it reaches 0. Players can see the countdown timer on their screen.
+**Optional Timer:** The host has the option to set a 30-second timer at the start of each round. When enabled, the timer starts when the host opens guessing and serves as a visual reference only. Players can see the countdown timer on their screen.
 
 **Staying Connected:** If a player refreshes the page on the same device/browser, they will auto-reconnect using their stored session and continue playing from where they left off.
 
@@ -29,11 +27,11 @@ All participants set their display names. Once everyone has joined, the host sta
 
 **Round Flow:**
 
-1. The current number is visible to both the host and players, and the host announces it out loud to the group
+1. The host announces the current number out loud to the group (from their own source or a number they set)
 2. The host opens guessing and prompts everyone to guess whether the next number will be "higher" or "lower". Players cannot change their guess once submitted
 3. The host can see who has submitted their guess and who is still pending
-4. The app reveals the next number to the host, the host announces it out loud, then selects "higher" or "lower" on their device to confirm the correct answer
-5. Players see the revealed number and an animation indicating whether they guessed correctly or incorrectly
+4. The host announces the next number out loud (from their own source or a number they set), then selects "higher" or "lower" on their device to confirm the correct answer
+5. Players see an animation indicating whether they guessed correctly or incorrectly
 6. Correct guesses: Players remain in the game
 7. Incorrect guesses: Players are eliminated
 8. No guess submitted: If a player hasn't selected higher or lower before the host selects the answer, they will be eliminated
