@@ -195,17 +195,13 @@ export default function Home() {
       return cryptoApi.randomUUID();
     }
     if (cryptoApi?.getRandomValues) {
-      return Array.from(cryptoApi.getRandomValues(new Uint8Array(16)))
-        .map((byte, index) => {
-          if (index === 6) {
-            return ((byte & 0x0f) | 0x40).toString(16).padStart(2, "0");
-          }
-          if (index === 8) {
-            return ((byte & 0x3f) | 0x80).toString(16).padStart(2, "0");
-          }
-          return byte.toString(16).padStart(2, "0");
-        })
-        .join("");
+      const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = Array.from(bytes).map((byte) => byte.toString(16).padStart(2, "0"));
+      return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex
+        .slice(6, 8)
+        .join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10, 16).join("")}`;
     }
     return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   };
@@ -340,7 +336,9 @@ export default function Home() {
     let lastMessage = `${answer === "higher" ? "Higher" : "Lower"} was correct.`;
     let winnerId: string | null = null;
     if (activePlayers.length === 0) {
-      updatedPlayers = updatedPlayers.map((player): Player => ({ ...player, status: "in" }));
+      updatedPlayers = updatedPlayers.map(
+        (player): Player => ({ ...player, status: "in", guess: null })
+      );
       lastMessage = "Everyone was eliminated. Reviving all players for the next round.";
     }
     if (activePlayers.length === 1) {
