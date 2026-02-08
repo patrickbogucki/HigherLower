@@ -11,6 +11,7 @@
 - **Vite** for fast local development and builds.
 - **Tailwind CSS** for consistent spacing, typography, and component styling.
 - **Framer Motion** for round transitions, reveal animations, and status feedback.
+- **Lucide** (or Heroicons) for a cohesive icon set.
 
 ### Backend & Realtime
 - **Node.js + Express** for the game API and session management.
@@ -18,7 +19,7 @@
 - **Zod** for request and event payload validation.
 
 ### Data & State
-- **Redis** for in-memory game session state and quick reconnection lookup.
+- **Redis** for in-memory game session state and quick reconnection lookup (low-latency + TTL cleanup for short-lived games).
 - **PostgreSQL** (optional) for analytics, historical games, and audit logs.
 
 ### Quality & DevOps
