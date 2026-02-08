@@ -196,9 +196,15 @@ export default function Home() {
     }
     if (cryptoApi?.getRandomValues) {
       return Array.from(cryptoApi.getRandomValues(new Uint8Array(16)))
-        .map((byte, index) =>
-          (index === 6 ? (byte & 0x0f) | 0x40 : byte).toString(16).padStart(2, "0")
-        )
+        .map((byte, index) => {
+          if (index === 6) {
+            return ((byte & 0x0f) | 0x40).toString(16).padStart(2, "0");
+          }
+          if (index === 8) {
+            return ((byte & 0x3f) | 0x80).toString(16).padStart(2, "0");
+          }
+          return byte.toString(16).padStart(2, "0");
+        })
         .join("");
     }
     return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -256,19 +262,20 @@ export default function Home() {
     }
     const newId = createPlayerId();
     const existingPlayer = gameState.players.find((player) => player.name === trimmedName);
-    const playerId = existingPlayer?.id ?? newId;
+    if (existingPlayer) {
+      setJoinError("That name is already taken. Choose another.");
+      return;
+    }
     const newPlayer: Player = {
-      id: playerId,
+      id: newId,
       name: trimmedName,
       status: "in",
       correctGuesses: 0,
       guess: null,
     };
-    const updatedPlayers = existingPlayer
-      ? gameState.players
-      : [...gameState.players, newPlayer];
+    const updatedPlayers = [...gameState.players, newPlayer];
     persistGame({ ...gameState, players: updatedPlayers });
-    persistSession({ role: "player", playerId });
+    persistSession({ role: "player", playerId: newId });
     resetJoinState();
   };
 
@@ -360,9 +367,10 @@ export default function Home() {
     if (gameState.stage !== "guessing") {
       return;
     }
-    const updatedPlayers = gameState.players.map((player) =>
-      player.id === session.playerId && !player.guess ? { ...player, guess } : player
-    );
+    const updatedPlayers = gameState.players.map((player) => {
+      const canSubmitGuess = player.id === session.playerId && !player.guess;
+      return canSubmitGuess ? { ...player, guess } : player;
+    });
     persistGame({ ...gameState, players: updatedPlayers });
   };
 
