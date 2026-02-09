@@ -26,12 +26,7 @@ const ping = () => {
       console.log("Health check succeeded.");
       process.exit(0);
     }
-    if (statusCode >= 500) {
-      scheduleRetry(`Health check returned ${statusCode} status.`);
-      return;
-    }
-    console.error(`Health check failed with status ${statusCode}.`);
-    process.exit(1);
+    scheduleRetry(`Health check returned ${statusCode} status.`);
   });
 
   request.on("error", (error) => {

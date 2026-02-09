@@ -84,18 +84,14 @@ while true; do
       EXIT_CODE=$FRONTEND_EXIT
     fi
     handle_exit "both" "$EXIT_CODE"
-  fi
-
-  if [ "$SERVER_DEAD" = true ]; then
+  elif [ "$SERVER_DEAD" = true ]; then
     if wait "$SERVER_PID"; then
       EXIT_CODE=0
     else
       EXIT_CODE=$?
     fi
     handle_exit "backend" "$EXIT_CODE"
-  fi
-
-  if [ "$FRONT_DEAD" = true ]; then
+  elif [ "$FRONT_DEAD" = true ]; then
     if wait "$FRONT_PID"; then
       EXIT_CODE=0
     else
