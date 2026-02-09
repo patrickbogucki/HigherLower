@@ -5,7 +5,7 @@ node server/index.mjs &
 SERVER_PID=$!
 
 wait_for_server() {
-  node -e 'const http=require("http");const maxAttempts=30;let attempts=0;const ping=()=>{const req=http.get("http://127.0.0.1:3001/health",res=>{res.resume();process.exit(0);});req.on("error",()=>{attempts+=1;if(attempts>=maxAttempts){process.exit(1);}setTimeout(ping,500);});};ping();'
+  node wait-for-server.mjs
 }
 
 cleanup() {
