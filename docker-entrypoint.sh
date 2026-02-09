@@ -15,23 +15,19 @@ cleanup() {
   if [ -n "${FRONT_PID:-}" ]; then
     kill -TERM "$FRONT_PID" 2>/dev/null || true
   fi
-  WAIT_PIDS=""
+  WAIT_FAILED=false
   if [ -n "$SERVER_PID" ]; then
-    WAIT_PIDS="$SERVER_PID"
+    if ! wait "$SERVER_PID"; then
+      WAIT_FAILED=true
+    fi
   fi
   if [ -n "${FRONT_PID:-}" ]; then
-    WAIT_PIDS="$WAIT_PIDS $FRONT_PID"
-  fi
-  if [ -n "$WAIT_PIDS" ]; then
-    WAIT_FAILED=false
-    for PID in $WAIT_PIDS; do
-      if ! wait "$PID"; then
-        WAIT_FAILED=true
-      fi
-    done
-    if [ "$WAIT_FAILED" = true ]; then
-      echo "Cleanup warning: one or more processes did not terminate cleanly." >&2
+    if ! wait "$FRONT_PID"; then
+      WAIT_FAILED=true
     fi
+  fi
+  if [ "$WAIT_FAILED" = true ]; then
+    echo "Cleanup warning: one or more processes did not terminate cleanly." >&2
   fi
 }
 
@@ -61,27 +57,35 @@ handle_exit() {
 }
 
 while true; do
-  SERVER_ALIVE=true
-  FRONT_ALIVE=true
+  SERVER_DEAD=false
+  FRONT_DEAD=false
 
   if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    SERVER_ALIVE=false
+    SERVER_DEAD=true
   fi
 
   if ! kill -0 "$FRONT_PID" 2>/dev/null; then
-    FRONT_ALIVE=false
+    FRONT_DEAD=true
   fi
 
-  if [ "$SERVER_ALIVE" = false ] && [ "$FRONT_ALIVE" = false ]; then
-    if wait "$SERVER_PID"; then
+  if [ "$SERVER_DEAD" = true ] && [ "$FRONT_DEAD" = true ]; then
+    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+      if wait "$SERVER_PID"; then
+        BACKEND_EXIT=0
+      else
+        BACKEND_EXIT=$?
+      fi
+    else
       BACKEND_EXIT=0
-    else
-      BACKEND_EXIT=$?
     fi
-    if wait "$FRONT_PID"; then
-      FRONTEND_EXIT=0
+    if ! kill -0 "$FRONT_PID" 2>/dev/null; then
+      if wait "$FRONT_PID"; then
+        FRONTEND_EXIT=0
+      else
+        FRONTEND_EXIT=$?
+      fi
     else
-      FRONTEND_EXIT=$?
+      FRONTEND_EXIT=0
     fi
     EXIT_CODE=$BACKEND_EXIT
     if [ "$EXIT_CODE" -eq 0 ]; then
@@ -90,22 +94,26 @@ while true; do
     handle_exit "both" "$EXIT_CODE"
   fi
 
-  if [ "$SERVER_ALIVE" = false ]; then
-    if wait "$SERVER_PID"; then
-      EXIT_CODE=0
-    else
-      EXIT_CODE=$?
+  if [ "$SERVER_DEAD" = true ]; then
+    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+      if wait "$SERVER_PID"; then
+        EXIT_CODE=0
+      else
+        EXIT_CODE=$?
+      fi
+      handle_exit "backend" "$EXIT_CODE"
     fi
-    handle_exit "backend" "$EXIT_CODE"
   fi
 
-  if [ "$FRONT_ALIVE" = false ]; then
-    if wait "$FRONT_PID"; then
-      EXIT_CODE=0
-    else
-      EXIT_CODE=$?
+  if [ "$FRONT_DEAD" = true ]; then
+    if ! kill -0 "$FRONT_PID" 2>/dev/null; then
+      if wait "$FRONT_PID"; then
+        EXIT_CODE=0
+      else
+        EXIT_CODE=$?
+      fi
+      handle_exit "frontend" "$EXIT_CODE"
     fi
-    handle_exit "frontend" "$EXIT_CODE"
   fi
 
   sleep 1
