@@ -69,23 +69,15 @@ while true; do
   fi
 
   if [ "$SERVER_DEAD" = true ] && [ "$FRONT_DEAD" = true ]; then
-    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-      if wait "$SERVER_PID"; then
-        BACKEND_EXIT=0
-      else
-        BACKEND_EXIT=$?
-      fi
-    else
+    if wait "$SERVER_PID"; then
       BACKEND_EXIT=0
-    fi
-    if ! kill -0 "$FRONT_PID" 2>/dev/null; then
-      if wait "$FRONT_PID"; then
-        FRONTEND_EXIT=0
-      else
-        FRONTEND_EXIT=$?
-      fi
     else
+      BACKEND_EXIT=$?
+    fi
+    if wait "$FRONT_PID"; then
       FRONTEND_EXIT=0
+    else
+      FRONTEND_EXIT=$?
     fi
     EXIT_CODE=$BACKEND_EXIT
     if [ "$EXIT_CODE" -eq 0 ]; then
@@ -95,25 +87,21 @@ while true; do
   fi
 
   if [ "$SERVER_DEAD" = true ]; then
-    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-      if wait "$SERVER_PID"; then
-        EXIT_CODE=0
-      else
-        EXIT_CODE=$?
-      fi
-      handle_exit "backend" "$EXIT_CODE"
+    if wait "$SERVER_PID"; then
+      EXIT_CODE=0
+    else
+      EXIT_CODE=$?
     fi
+    handle_exit "backend" "$EXIT_CODE"
   fi
 
   if [ "$FRONT_DEAD" = true ]; then
-    if ! kill -0 "$FRONT_PID" 2>/dev/null; then
-      if wait "$FRONT_PID"; then
-        EXIT_CODE=0
-      else
-        EXIT_CODE=$?
-      fi
-      handle_exit "frontend" "$EXIT_CODE"
+    if wait "$FRONT_PID"; then
+      EXIT_CODE=0
+    else
+      EXIT_CODE=$?
     fi
+    handle_exit "frontend" "$EXIT_CODE"
   fi
 
   sleep 1
