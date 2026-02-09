@@ -42,7 +42,18 @@ handle_exit() {
 }
 
 while true; do
+  SERVER_ALIVE=true
+  FRONT_ALIVE=true
+
   if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    SERVER_ALIVE=false
+  fi
+
+  if ! kill -0 "$FRONT_PID" 2>/dev/null; then
+    FRONT_ALIVE=false
+  fi
+
+  if [ "$SERVER_ALIVE" = false ]; then
     if wait "$SERVER_PID"; then
       EXIT_CODE=0
     else
@@ -51,7 +62,7 @@ while true; do
     handle_exit "backend" "$EXIT_CODE"
   fi
 
-  if ! kill -0 "$FRONT_PID" 2>/dev/null; then
+  if [ "$FRONT_ALIVE" = false ]; then
     if wait "$FRONT_PID"; then
       EXIT_CODE=0
     else

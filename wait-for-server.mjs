@@ -23,6 +23,7 @@ const ping = () => {
     if (response.statusCode === 200) {
       response.resume();
       process.exit(0);
+      return;
     }
     response.resume();
     scheduleRetry(`Health check returned ${response.statusCode ?? "unknown"} status.`);
