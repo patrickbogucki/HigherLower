@@ -75,11 +75,14 @@ const parsePayload = (schema, payload, ack) => {
 };
 
 const generateCode = () => {
-  let code = "";
-  do {
-    code = Math.floor(100000 + Math.random() * 900000).toString();
-  } while (sessions.has(code));
-  return code;
+  const maxAttempts = 10000;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    if (!sessions.has(code)) {
+      return code;
+    }
+  }
+  throw new Error("Unable to generate unique code.");
 };
 
 const listPlayers = (session) =>
@@ -118,13 +121,25 @@ const clearHostTimeout = (session) => {
   }
 };
 
+const cleanupSession = (session, reason) => {
+  sessions.delete(session.code);
+  io.to(session.code).emit("game:ended", { reason });
+  io.in(session.code).socketsLeave(session.code);
+};
+
 io.on("connection", (socket) => {
   socket.on("lobby:create", (payload, ack) => {
     const data = parsePayload(lobbyCreateSchema, payload, ack);
     if (!data) {
       return;
     }
-    const code = generateCode();
+    let code = "";
+    try {
+      code = generateCode();
+    } catch {
+      sendAck(ack, { ok: false, error: "Unable to create game code." });
+      return;
+    }
     const session = {
       code,
       hostSocketId: socket.id,
@@ -279,7 +294,7 @@ io.on("connection", (socket) => {
     session.players.forEach((player) => {
       const guessed = player.guess;
       const correct = guessed === data.correctAnswer;
-      if (guessed == null) {
+      if (guessed === null || guessed === undefined) {
         player.status = "out";
       } else if (player.status === "in" && !correct) {
         player.status = "out";
@@ -382,11 +397,7 @@ io.on("connection", (socket) => {
       sendAck(ack, { ok: false, error: "Not authorized." });
       return;
     }
-    sessions.delete(session.code);
-    io.to(session.code).emit("game:ended", {
-      reason: data.reason ?? "host-ended",
-    });
-    io.in(session.code).socketsLeave(session.code);
+    cleanupSession(session, data.reason ?? "host-ended");
     sendAck(ack, { ok: true });
   });
 
@@ -396,9 +407,7 @@ io.on("connection", (socket) => {
         session.hostSocketId = null;
         clearHostTimeout(session);
         session.hostDisconnectTimer = setTimeout(() => {
-          sessions.delete(session.code);
-          io.to(session.code).emit("game:ended", { reason: "host-timeout" });
-          io.in(session.code).socketsLeave(session.code);
+          cleanupSession(session, "host-timeout");
         }, SESSION_TTL_MS);
       }
       session.players.forEach((player) => {
