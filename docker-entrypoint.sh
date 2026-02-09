@@ -25,26 +25,12 @@ wait_for_server
 npm start &
 FRONT_PID=$!
 
-while true; do
-  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    if wait "$SERVER_PID"; then
-      EXIT_CODE=0
-    else
-      EXIT_CODE=$?
-    fi
-    kill -TERM "$FRONT_PID" 2>/dev/null || true
-    wait "$FRONT_PID" || true
-    exit "$EXIT_CODE"
-  fi
-  if ! kill -0 "$FRONT_PID" 2>/dev/null; then
-    if wait "$FRONT_PID"; then
-      EXIT_CODE=0
-    else
-      EXIT_CODE=$?
-    fi
-    kill -TERM "$SERVER_PID" 2>/dev/null || true
-    wait "$SERVER_PID" || true
-    exit "$EXIT_CODE"
-  fi
-  sleep 1
-done
+if wait -n "$SERVER_PID" "$FRONT_PID"; then
+  EXIT_CODE=0
+else
+  EXIT_CODE=$?
+fi
+
+kill -TERM "$SERVER_PID" "$FRONT_PID" 2>/dev/null || true
+wait "$SERVER_PID" "$FRONT_PID" 2>/dev/null || true
+exit "$EXIT_CODE"
