@@ -373,7 +373,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("player:heartbeat", (payload) => {
-    const data = parsePayload(reconnectSchema, payload);
+    const data = parsePayload(reconnectSchema, payload, null);
     if (!data) {
       return;
     }
