@@ -20,11 +20,10 @@ const scheduleRetry = (message) => {
 
 const ping = () => {
   const request = http.get(url, (response) => {
+    response.resume();
     if (response.statusCode === 200) {
-      response.resume();
       process.exit(0);
     }
-    response.resume();
     scheduleRetry(`Health check returned ${response.statusCode ?? "unknown"} status.`);
   });
 

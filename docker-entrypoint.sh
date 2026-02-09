@@ -41,35 +41,18 @@ handle_exit() {
   exit "$EXIT_CODE"
 }
 
-while true; do
-  SERVER_ALIVE=true
-  FRONT_ALIVE=true
+if wait -n; then
+  EXIT_CODE=0
+else
+  EXIT_CODE=$?
+fi
 
-  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    SERVER_ALIVE=false
-  fi
+if kill -0 "$SERVER_PID" 2>/dev/null; then
+  EXIT_SOURCE="frontend"
+elif kill -0 "$FRONT_PID" 2>/dev/null; then
+  EXIT_SOURCE="backend"
+else
+  EXIT_SOURCE="backend"
+fi
 
-  if ! kill -0 "$FRONT_PID" 2>/dev/null; then
-    FRONT_ALIVE=false
-  fi
-
-  if [ "$SERVER_ALIVE" = false ]; then
-    if wait "$SERVER_PID"; then
-      EXIT_CODE=0
-    else
-      EXIT_CODE=$?
-    fi
-    handle_exit "backend" "$EXIT_CODE"
-  fi
-
-  if [ "$FRONT_ALIVE" = false ]; then
-    if wait "$FRONT_PID"; then
-      EXIT_CODE=0
-    else
-      EXIT_CODE=$?
-    fi
-    handle_exit "frontend" "$EXIT_CODE"
-  fi
-
-  sleep 1
-done
+handle_exit "$EXIT_SOURCE" "$EXIT_CODE"
