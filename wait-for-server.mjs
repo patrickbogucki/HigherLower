@@ -12,6 +12,7 @@ const scheduleRetry = (message) => {
     console.error(message);
   }
   if (attempts >= maxAttempts) {
+    console.error(`Health check failed after ${maxAttempts} attempts.`);
     process.exit(1);
   }
   setTimeout(ping, intervalMs);

@@ -25,26 +25,40 @@ wait_for_server
 npm start &
 FRONT_PID=$!
 
-if wait -n "$SERVER_PID" "$FRONT_PID"; then
-  EXIT_CODE=0
-else
-  EXIT_CODE=$?
-fi
+handle_exit() {
+  EXIT_SOURCE="$1"
+  EXIT_CODE="$2"
 
-if kill -0 "$SERVER_PID" 2>/dev/null; then
-  EXIT_SOURCE="frontend"
-else
-  EXIT_SOURCE="backend"
-fi
+  if [ "$EXIT_SOURCE" = "frontend" ]; then
+    EXIT_LABEL="Frontend"
+  else
+    EXIT_LABEL="Backend"
+  fi
 
-if [ "$EXIT_SOURCE" = "frontend" ]; then
-  EXIT_LABEL="Frontend"
-else
-  EXIT_LABEL="Backend"
-fi
+  echo "$EXIT_LABEL process exited with code $EXIT_CODE. Shutting down." >&2
+  trap - EXIT
+  cleanup
+  exit "$EXIT_CODE"
+}
 
-echo "$EXIT_LABEL process exited with code $EXIT_CODE. Shutting down." >&2
+while true; do
+  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    if wait "$SERVER_PID"; then
+      EXIT_CODE=0
+    else
+      EXIT_CODE=$?
+    fi
+    handle_exit "backend" "$EXIT_CODE"
+  fi
 
-trap - EXIT
-cleanup
-exit "$EXIT_CODE"
+  if ! kill -0 "$FRONT_PID" 2>/dev/null; then
+    if wait "$FRONT_PID"; then
+      EXIT_CODE=0
+    else
+      EXIT_CODE=$?
+    fi
+    handle_exit "frontend" "$EXIT_CODE"
+  fi
+
+  sleep 1
+done
