@@ -36,8 +36,8 @@ handle_exit() {
   fi
 
   echo "$EXIT_LABEL process exited with code $EXIT_CODE. Shutting down." >&2
-  trap - EXIT
   cleanup
+  trap - EXIT
   exit "$EXIT_CODE"
 }
 
