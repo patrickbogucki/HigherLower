@@ -22,6 +22,7 @@ const ping = () => {
   const request = http.get(url, (response) => {
     response.resume();
     if (response.statusCode === 200) {
+      console.log("Health check succeeded.");
       process.exit(0);
     }
     scheduleRetry(`Health check returned ${response.statusCode ?? "unknown"} status.`);

@@ -15,7 +15,9 @@ cleanup() {
   if [ -n "${FRONT_PID:-}" ]; then
     kill -TERM "$FRONT_PID" 2>/dev/null || true
   fi
-  wait || true
+  if ! wait; then
+    echo "Cleanup warning: one or more processes did not terminate cleanly." >&2
+  fi
 }
 
 trap cleanup INT TERM EXIT
@@ -31,6 +33,8 @@ handle_exit() {
 
   if [ "$EXIT_SOURCE" = "frontend" ]; then
     EXIT_LABEL="Frontend"
+  elif [ "$EXIT_SOURCE" = "both" ]; then
+    EXIT_LABEL="Both processes"
   else
     EXIT_LABEL="Backend"
   fi
@@ -52,7 +56,7 @@ if kill -0 "$SERVER_PID" 2>/dev/null; then
 elif kill -0 "$FRONT_PID" 2>/dev/null; then
   EXIT_SOURCE="backend"
 else
-  EXIT_SOURCE="backend"
+  EXIT_SOURCE="both"
 fi
 
 handle_exit "$EXIT_SOURCE" "$EXIT_CODE"
