@@ -1,8 +1,15 @@
-import crypto from "crypto";
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import { z } from "zod";
+import {
+  createPlayer,
+  createSession,
+  generateCode,
+  listPlayers,
+  sessionSnapshot,
+  sessions,
+} from "./database.mjs";
 
 const PORT = Number(process.env.PORT) || 3001;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
@@ -19,8 +26,6 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: CORS_ORIGIN },
 });
-
-const sessions = new Map();
 
 const lobbyCreateSchema = z.object({
   hostName: z.string().min(1).max(40).optional(),
@@ -74,36 +79,6 @@ const parsePayload = (schema, payload, ack) => {
   return result.data;
 };
 
-const generateCode = () => {
-  const maxAttempts = 10000;
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    if (!sessions.has(code)) {
-      return code;
-    }
-  }
-  throw new Error("Unable to generate unique code.");
-};
-
-const listPlayers = (session) =>
-  Array.from(session.players.values()).map((player) => ({
-    id: player.id,
-    name: player.name,
-    status: player.status,
-    correctGuesses: player.correctGuesses,
-  }));
-
-const sessionSnapshot = (session) => ({
-  code: session.code,
-  locked: session.locked,
-  roundIndex: session.roundIndex,
-  timerSeconds: session.timerSeconds,
-  currentValue: session.currentValue,
-  previousValue: session.previousValue,
-  guessesOpen: session.guessesOpen,
-  players: listPlayers(session),
-});
-
 const emitLobbyUpdate = (session) => {
   io.to(session.code).emit("lobby:updated", sessionSnapshot(session));
 };
@@ -140,21 +115,11 @@ io.on("connection", (socket) => {
       sendAck(ack, { ok: false, error: "Unable to create game code." });
       return;
     }
-    const session = {
+    const session = createSession({
       code,
       hostSocketId: socket.id,
-      hostName: data.hostName ?? "Host",
-      locked: false,
-      roundIndex: 0,
-      timerSeconds: null,
-      currentValue: null,
-      previousValue: null,
-      guessesOpen: false,
-      correctAnswer: null,
-      players: new Map(),
-      createdAt: Date.now(),
-      hostDisconnectTimer: null,
-    };
+      hostName: data.hostName,
+    });
     sessions.set(code, session);
     socket.join(code);
     sendAck(ack, { ok: true, data: { code } });
@@ -175,16 +140,11 @@ io.on("connection", (socket) => {
       sendAck(ack, { ok: false, error: "Lobby is locked." });
       return;
     }
-    const playerId = crypto.randomUUID();
-    const player = {
-      id: playerId,
+    const player = createPlayer({
       name: data.playerName,
-      status: "in",
-      correctGuesses: 0,
-      guess: null,
       socketId: socket.id,
-      lastSeen: new Date().toISOString(),
-    };
+    });
+    const playerId = player.id;
     session.players.set(playerId, player);
     socket.join(session.code);
     sendAck(ack, { ok: true, data: { playerId, ...sessionSnapshot(session) } });
