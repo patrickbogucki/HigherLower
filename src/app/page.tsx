@@ -643,7 +643,7 @@ export default function Home() {
           overflow: hidden;
           transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
           width: 100%;
-          max-width: 360px;
+          max-width: 420px;
         }
 
         .join-inner {
