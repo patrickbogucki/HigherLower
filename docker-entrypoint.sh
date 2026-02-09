@@ -31,6 +31,20 @@ else
   EXIT_CODE=$?
 fi
 
-kill -TERM "$SERVER_PID" "$FRONT_PID" 2>/dev/null || true
-wait "$SERVER_PID" "$FRONT_PID" 2>/dev/null || true
+if kill -0 "$SERVER_PID" 2>/dev/null; then
+  EXIT_SOURCE="frontend"
+else
+  EXIT_SOURCE="backend"
+fi
+
+if [ "$EXIT_SOURCE" = "frontend" ]; then
+  EXIT_LABEL="Frontend"
+else
+  EXIT_LABEL="Backend"
+fi
+
+echo "$EXIT_LABEL process exited with code $EXIT_CODE. Shutting down." >&2
+
+trap - EXIT
+cleanup
 exit "$EXIT_CODE"
