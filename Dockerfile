@@ -11,4 +11,7 @@ RUN npm run build
 ENV NODE_ENV=production
 EXPOSE 3000 3001
 
-CMD ["sh", "-c", "node server/index.mjs & npm start"]
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh
+
+CMD ["./docker-entrypoint.sh"]
