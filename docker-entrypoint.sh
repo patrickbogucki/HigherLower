@@ -15,8 +15,17 @@ cleanup() {
   if [ -n "${FRONT_PID:-}" ]; then
     kill -TERM "$FRONT_PID" 2>/dev/null || true
   fi
-  if ! wait; then
-    echo "Cleanup warning: one or more processes did not terminate cleanly." >&2
+  WAIT_PIDS=""
+  if [ -n "$SERVER_PID" ]; then
+    WAIT_PIDS="$SERVER_PID"
+  fi
+  if [ -n "${FRONT_PID:-}" ]; then
+    WAIT_PIDS="$WAIT_PIDS $FRONT_PID"
+  fi
+  if [ -n "$WAIT_PIDS" ]; then
+    if ! wait $WAIT_PIDS; then
+      echo "Cleanup warning: one or more processes did not terminate cleanly." >&2
+    fi
   fi
 }
 
@@ -51,9 +60,9 @@ else
   EXIT_CODE=$?
 fi
 
-if kill -0 "$SERVER_PID" 2>/dev/null; then
+if kill -0 "$SERVER_PID" 2>/dev/null && ! kill -0 "$FRONT_PID" 2>/dev/null; then
   EXIT_SOURCE="frontend"
-elif kill -0 "$FRONT_PID" 2>/dev/null; then
+elif kill -0 "$FRONT_PID" 2>/dev/null && ! kill -0 "$SERVER_PID" 2>/dev/null; then
   EXIT_SOURCE="backend"
 else
   EXIT_SOURCE="both"
