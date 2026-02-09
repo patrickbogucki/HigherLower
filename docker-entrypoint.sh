@@ -23,7 +23,13 @@ cleanup() {
     WAIT_PIDS="$WAIT_PIDS $FRONT_PID"
   fi
   if [ -n "$WAIT_PIDS" ]; then
-    if ! wait $WAIT_PIDS; then
+    WAIT_FAILED=false
+    for PID in $WAIT_PIDS; do
+      if ! wait "$PID"; then
+        WAIT_FAILED=true
+      fi
+    done
+    if [ "$WAIT_FAILED" = true ]; then
       echo "Cleanup warning: one or more processes did not terminate cleanly." >&2
     fi
   fi
@@ -64,6 +70,24 @@ while true; do
 
   if ! kill -0 "$FRONT_PID" 2>/dev/null; then
     FRONT_ALIVE=false
+  fi
+
+  if [ "$SERVER_ALIVE" = false ] && [ "$FRONT_ALIVE" = false ]; then
+    if wait "$SERVER_PID"; then
+      BACKEND_EXIT=0
+    else
+      BACKEND_EXIT=$?
+    fi
+    if wait "$FRONT_PID"; then
+      FRONTEND_EXIT=0
+    else
+      FRONTEND_EXIT=$?
+    fi
+    EXIT_CODE=$BACKEND_EXIT
+    if [ "$EXIT_CODE" -eq 0 ]; then
+      EXIT_CODE=$FRONTEND_EXIT
+    fi
+    handle_exit "both" "$EXIT_CODE"
   fi
 
   if [ "$SERVER_ALIVE" = false ]; then
