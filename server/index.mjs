@@ -241,6 +241,10 @@ io.on("connection", (socket) => {
       sendAck(ack, { ok: false, error: "Not authorized." });
       return;
     }
+    if (session.players.size === 0) {
+      sendAck(ack, { ok: false, error: "At least one player must join first." });
+      return;
+    }
     lockLobby(session);
     io.to(session.code).emit("game:started", { code: session.code });
     startRound(session, data);
@@ -255,6 +259,10 @@ io.on("connection", (socket) => {
     const session = sessions.get(data.code);
     if (!session || session.hostSocketId !== socket.id) {
       sendAck(ack, { ok: false, error: "Not authorized." });
+      return;
+    }
+    if (session.players.size === 0) {
+      sendAck(ack, { ok: false, error: "At least one player must join first." });
       return;
     }
     startRound(session, data);

@@ -172,6 +172,7 @@ export default function Home() {
   const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
   const [copyStatus, setCopyStatus] = useState("");
   const [socketReady, setSocketReady] = useState(false);
+  const [localPlayerGuess, setLocalPlayerGuess] = useState<PlayerGuess>(null);
   const socketRef = useRef<Socket | null>(null);
   const lastReconnectRef = useRef<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
@@ -323,6 +324,14 @@ export default function Home() {
       setNextNumberInput("");
     }
   }, [gameState?.nextNumber, gameState?.stage]);
+
+  useEffect(() => {
+    if (gameState?.stage !== "guessing") {
+      setLocalPlayerGuess(null);
+      return;
+    }
+    setLocalPlayerGuess(null);
+  }, [gameState?.round, gameState?.stage]);
 
   const persistGame = useCallback(
     (next: GameState | null | ((prev: GameState | null) => GameState | null)) => {
@@ -521,6 +530,25 @@ export default function Home() {
     );
   }, [gameState?.code, persistGame, setHostMessage, session, socketReady]);
 
+  useEffect(() => {
+    if (!session || session.role !== "player") {
+      return;
+    }
+    const socket = socketRef.current;
+    const code = session.code ?? gameState?.code;
+    if (!socket || !code) {
+      return;
+    }
+    const heartbeat = () => {
+      if (socket.connected) {
+        socket.emit("player:heartbeat", { code, playerId: session.playerId });
+      }
+    };
+    heartbeat();
+    const interval = window.setInterval(heartbeat, 15000);
+    return () => window.clearInterval(interval);
+  }, [gameState?.code, session]);
+
   const handleCreateGame = () => {
     const socket = socketRef.current;
     if (!socket) {
@@ -607,6 +635,10 @@ export default function Home() {
     if (!gameState) {
       return;
     }
+    if (gameState.players.length === 0) {
+      setHostMessage("At least one player must join before starting the round.");
+      return;
+    }
     const currentValue = Number(currentNumberInput);
     if (!Number.isFinite(currentValue)) {
       setHostMessage("Enter a valid current number before opening guesses.");
@@ -622,7 +654,28 @@ export default function Home() {
     const handleRoundStart = (response: SocketAckResponse<void>) => {
       if (!response.ok) {
         setHostMessage(response.error);
+        return;
       }
+      persistGame((prev) => {
+        if (!prev) {
+          return prev;
+        }
+        const nextRound = prev.stage === "lobby" ? prev.round : prev.round + 1;
+        const updatedPlayers = prev.players.map((player) => ({ ...player, guess: null }));
+        return {
+          ...prev,
+          stage: "guessing",
+          round: nextRound,
+          currentNumber: currentValue,
+          nextNumber: null,
+          timerEnabled: Boolean(timerSeconds),
+          timerEndTime: timerSeconds ? Date.now() + timerSeconds * 1000 : null,
+          players: updatedPlayers,
+          lastAnswer: null,
+          lastMessage: null,
+          winnerId: null,
+        };
+      });
     };
     const startRound = () => {
       if (gameState.stage === "lobby") {
@@ -708,6 +761,7 @@ export default function Home() {
           setJoinError(response.error);
           return;
         }
+        setLocalPlayerGuess(guess);
         persistGame((prev) => {
           if (!prev) {
             return prev;
@@ -799,6 +853,7 @@ export default function Home() {
     session?.role === "player"
       ? gameState?.players.find((player) => player.id === session.playerId)
       : null;
+  const effectivePlayerGuess = playerRecord?.guess ?? localPlayerGuess;
   const submittedCount = gameState
     ? gameState.players.filter((player) => player.guess).length
     : 0;
@@ -814,6 +869,11 @@ export default function Home() {
     gameState.players.length > 0;
   const canResolve =
     Boolean(nextNumberInput.trim()) && gameState !== null && gameState.stage === "guessing";
+  const canSubmitPlayerGuess =
+    Boolean(gameState) &&
+    gameState.stage === "guessing" &&
+    session?.role === "player" &&
+    !effectivePlayerGuess;
 
   return (
     <>
@@ -1683,7 +1743,11 @@ export default function Home() {
                   ) : (
                     <div className="result-banner">
                       {gameState?.stage === "lobby"
-                        ? "Open guessing once everyone has joined."
+                        ? gameState?.players.length
+                          ? currentNumberInput.trim()
+                            ? "Ready to start round 1."
+                            : "Enter the current number to start round 1."
+                          : "Waiting for players to join."
                         : gameState?.stage === "reveal"
                         ? "Ready to open the next round."
                         : "Game complete. End the session when you are ready."}
@@ -1715,7 +1779,27 @@ export default function Home() {
                             {player.status === "in" ? "In" : "Out"}
                           </span>
                           {gameState?.stage === "guessing" ? (
-                            <span>{player.guess ? "Submitted" : "Pending"}</span>
+                            <span>
+                              {player.guess
+                                ? player.guess === "higher"
+                                  ? "Higher"
+                                  : "Lower"
+                                : "Pending"}
+                            </span>
+                          ) : gameState?.stage === "reveal" ||
+                            gameState?.stage === "ended" ? (
+                            <span>
+                              {player.guess
+                                ? player.guess === "higher"
+                                  ? "Higher"
+                                  : "Lower"
+                                : "No guess"}
+                              {player.guess && gameState?.lastAnswer
+                                ? player.guess === gameState.lastAnswer
+                                  ? " (Correct)"
+                                  : " (Wrong)"
+                                : ""}
+                            </span>
                           ) : null}
                         </div>
                       </div>
@@ -1774,7 +1858,7 @@ export default function Home() {
                     {gameState?.stage === "lobby"
                       ? "Waiting for the host to start the game."
                       : gameState?.stage === "guessing"
-                      ? playerRecord?.guess
+                      ? effectivePlayerGuess
                         ? "Guess locked in."
                         : "Make your choice now."
                       : gameState?.stage === "reveal"
@@ -1807,14 +1891,14 @@ export default function Home() {
                       <button
                         className="btn-gold"
                         onClick={() => handlePlayerGuess("higher")}
-                        disabled={!playerRecord || Boolean(playerRecord.guess)}
+                        disabled={!canSubmitPlayerGuess}
                       >
                         Higher
                       </button>
                       <button
                         className="btn-outline"
                         onClick={() => handlePlayerGuess("lower")}
-                        disabled={!playerRecord || Boolean(playerRecord.guess)}
+                        disabled={!canSubmitPlayerGuess}
                       >
                         Lower
                       </button>
@@ -1828,10 +1912,10 @@ export default function Home() {
                         : "The game is complete."}
                     </div>
                   )}
-                  {gameState?.stage === "reveal" && playerRecord ? (
+                  {gameState?.stage === "reveal" ? (
                     <div className="result-banner">
-                      {playerRecord.guess
-                        ? playerRecord.guess === gameState?.lastAnswer
+                      {effectivePlayerGuess
+                        ? effectivePlayerGuess === gameState?.lastAnswer
                           ? "You guessed correctly."
                           : "Your guess was incorrect."
                         : "No guess submitted this round."}
