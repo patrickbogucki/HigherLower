@@ -42,8 +42,9 @@ export default function HowToPlayPage() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
-          padding: 120px 24px 80px;
+          justify-content: flex-start;
+          padding: 0 24px 80px;
+          margin-top: 10px;
         }
 
         .hero-content {
