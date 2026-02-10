@@ -37,10 +37,7 @@ export default function HowToPlayPage() {
         }
 
         .top-nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
+          position: relative;
           z-index: 10;
           display: flex;
           align-items: center;

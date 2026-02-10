@@ -5,3 +5,13 @@ services:
       - "3000:3000"
       - "3001:3001"
     restart: unless-stopped
+  dev:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    command: sh -c "npm ci && (npm run server &) && npm run dev -- -H 0.0.0.0"
