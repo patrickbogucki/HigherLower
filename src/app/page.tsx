@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 
 type Stage = "lobby" | "guessing" | "reveal" | "ended";
@@ -173,6 +174,10 @@ export default function Home() {
   const [socketReady, setSocketReady] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const lastReconnectRef = useRef<string | null>(null);
+  const [storageReady, setStorageReady] = useState(false);
+  const joinNavigationRef = useRef(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Intentionally setting state on mount for animation purposes
@@ -207,7 +212,38 @@ export default function Home() {
         window.localStorage.removeItem(SESSION_KEY);
       }
     }
+    setStorageReady(true);
   }, []);
+
+  const sessionRole = session?.role;
+
+  useEffect(() => {
+    if (!storageReady) {
+      return;
+    }
+    const isPlayer = sessionRole === "player";
+    if (pathname === "/player") {
+      if (!isPlayer && !joinNavigationRef.current) {
+        router.replace("/");
+      }
+      return;
+    }
+    if (pathname === "/" && isPlayer) {
+      if (!joinNavigationRef.current) {
+        router.replace("/player");
+      }
+      return;
+    }
+    if (joinNavigationRef.current && !isPlayer) {
+      joinNavigationRef.current = false;
+    }
+  }, [pathname, router, sessionRole, storageReady]);
+
+  useEffect(() => {
+    if (sessionRole === "player" && joinNavigationRef.current) {
+      joinNavigationRef.current = false;
+    }
+  }, [sessionRole]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -557,6 +593,8 @@ export default function Home() {
           code: trimmedCode,
         });
         resetJoinState();
+        joinNavigationRef.current = true;
+        router.push("/player");
       }
     );
   };
