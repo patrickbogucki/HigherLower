@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 
@@ -1548,7 +1549,9 @@ export default function Home() {
         <nav className="top-nav">
           <div className="nav-logo">H / L</div>
           <div className="nav-links">
-            <span className="nav-link">How to Play</span>
+            <Link className="nav-link" href="/how-to-play">
+              How to Play
+            </Link>
           </div>
         </nav>
 
