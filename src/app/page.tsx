@@ -893,8 +893,6 @@ export default function Home() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap');
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         .opus5-body {
@@ -954,43 +952,8 @@ export default function Home() {
         }
 
         .top-nav {
-          position: relative;
-          z-index: 10;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 24px 48px;
           opacity: ${mounted ? 1 : 0};
           transition: opacity 0.8s ease 0.3s;
-        }
-
-        .nav-logo {
-          font-family: 'Playfair Display', serif;
-          font-size: 26px;
-          font-weight: 700;
-          color: #d4af37;
-          letter-spacing: 3px;
-          text-transform: uppercase;
-        }
-
-        .nav-links {
-          display: flex;
-          gap: 32px;
-        }
-
-        .nav-link {
-          font-size: 12px;
-          color: rgba(232, 228, 221, 0.35);
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          font-weight: 500;
-          text-decoration: none;
-          transition: color 0.3s ease;
-          cursor: pointer;
-        }
-
-        .nav-link:hover {
-          color: #d4af37;
         }
 
         .hero-content {
@@ -1517,9 +1480,6 @@ export default function Home() {
 
         @media (max-width: 640px) {
           .hero-title { font-size: 48px; }
-          .top-nav { padding: 16px 24px; }
-          .nav-links { display: flex; gap: 16px; }
-          .nav-link { font-size: 10px; letter-spacing: 1.5px; }
           .corner-bl, .corner-br { display: none; }
           .screen-title { font-size: 30px; }
           .game-header { align-items: flex-start; }
