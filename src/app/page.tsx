@@ -932,6 +932,7 @@ export default function Home() {
           justify-content: space-between;
           padding: 0 10%;
           pointer-events: none;
+          display: none;
         }
 
         .v-line {
@@ -1018,7 +1019,7 @@ export default function Home() {
           font-family: 'Playfair Display', serif;
           font-size: 72px;
           font-weight: 800;
-          line-height: 1;
+          line-height: 1.05;
           letter-spacing: -2px;
           margin-bottom: 8px;
           color: white;
@@ -1030,6 +1031,8 @@ export default function Home() {
           -webkit-text-fill-color: transparent;
           background-clip: text;
           font-style: italic;
+          display: inline-block;
+          padding-right: 12px;
         }
 
         .hero-subtitle {
