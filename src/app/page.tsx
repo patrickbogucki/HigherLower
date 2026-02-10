@@ -89,6 +89,7 @@ const TIMER_DURATION_SECONDS = TIMER_DURATION_MS / 1000;
 const JOIN_PANEL_MAX_HEIGHT = 200;
 const DEV_SOCKET_PORT = 3001;
 const SOCKET_PORT = Number(process.env.NEXT_PUBLIC_SOCKET_PORT) || null;
+const DEBUG_SOCKETS = process.env.NEXT_PUBLIC_DEBUG_SOCKETS === "1";
 const buildSocketUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_SERVER_URL;
   if (envUrl) {
@@ -391,9 +392,22 @@ export default function Home() {
     });
     socketRef.current = socket;
 
+    if (DEBUG_SOCKETS) {
+      console.info("[socket] connecting to", buildSocketUrl());
+    }
+
     const handleConnect = () => setSocketReady(true);
     const handleDisconnect = () => setSocketReady(false);
-    const handleConnectError = () => {
+    const handleConnectError = (
+      error?: Error & { description?: string; context?: unknown }
+    ) => {
+      if (DEBUG_SOCKETS) {
+        console.error("[socket] connect_error", {
+          message: error?.message,
+          description: error?.description,
+          context: error?.context,
+        });
+      }
       setJoinError("Unable to reach the game server.");
       setHostMessage("Unable to reach the game server.");
     };

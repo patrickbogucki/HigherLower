@@ -7,6 +7,13 @@ import { z } from "zod";
 const PORT = Number(process.env.PORT) || 3001;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 const SESSION_TTL_MS = 30 * 60 * 1000;
+const DEBUG_SOCKETS = process.env.DEBUG_SOCKETS === "1";
+
+const logSocket = (...args) => {
+  if (DEBUG_SOCKETS) {
+    console.log("[socket]", ...args);
+  }
+};
 
 const app = express();
 app.use(express.json());
@@ -19,6 +26,16 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: CORS_ORIGIN },
 });
+
+io.engine.on("connection_error", (err) => {
+  logSocket("engine connection_error", {
+    code: err.code,
+    message: err.message,
+    context: err.context,
+  });
+});
+
+logSocket("CORS_ORIGIN", CORS_ORIGIN);
 
 const sessions = new Map();
 
@@ -151,6 +168,12 @@ const cleanupSession = (session, reason) => {
 };
 
 io.on("connection", (socket) => {
+  logSocket("connected", {
+    id: socket.id,
+    origin: socket.handshake.headers.origin,
+    address: socket.handshake.address,
+    userAgent: socket.handshake.headers["user-agent"],
+  });
   socket.on("lobby:create", (payload, ack) => {
     const data = parsePayload(lobbyCreateSchema, payload, ack);
     if (!data) {
@@ -419,7 +442,8 @@ io.on("connection", (socket) => {
     sendAck(ack, { ok: true });
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (reason) => {
+    logSocket("disconnected", { id: socket.id, reason });
     sessions.forEach((session) => {
       if (session.hostSocketId === socket.id) {
         session.hostSocketId = null;
