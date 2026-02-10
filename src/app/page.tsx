@@ -87,7 +87,8 @@ const GAME_CODE_LENGTH = 6;
 const TIMER_DURATION_MS = 30000;
 const TIMER_DURATION_SECONDS = TIMER_DURATION_MS / 1000;
 const JOIN_PANEL_MAX_HEIGHT = 200;
-const SOCKET_PORT = Number(process.env.NEXT_PUBLIC_SOCKET_PORT) || 3001;
+const DEV_SOCKET_PORT = 3001;
+const SOCKET_PORT = Number(process.env.NEXT_PUBLIC_SOCKET_PORT) || null;
 const buildSocketUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_SERVER_URL;
   if (envUrl) {
@@ -98,9 +99,16 @@ const buildSocketUrl = () => {
     }
   }
   if (typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:${SOCKET_PORT}`;
+    const { protocol, hostname, origin } = window.location;
+    if (SOCKET_PORT) {
+      return `${protocol}//${hostname}:${SOCKET_PORT}`;
+    }
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+      return `${protocol}//${hostname}:${DEV_SOCKET_PORT}`;
+    }
+    return origin;
   }
-  return `http://localhost:${SOCKET_PORT}`;
+  return `http://localhost:${DEV_SOCKET_PORT}`;
 };
 
 const buildPlayersFromSnapshot = (
