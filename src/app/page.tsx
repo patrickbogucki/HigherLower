@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 
 type Stage = "lobby" | "guessing" | "reveal" | "ended";
 type PlayerStatus = "in" | "out";
@@ -28,13 +29,59 @@ type GameState = {
   winnerId: string | null;
 };
 
-type Session = { role: "host" } | { role: "player"; playerId: string };
+type Session =
+  | { role: "host"; code?: string }
+  | { role: "player"; playerId: string; code?: string };
+
+type LobbySnapshot = {
+  code: string;
+  locked: boolean;
+  roundIndex: number;
+  timerSeconds: number | null;
+  currentValue: number | null;
+  previousValue: number | null;
+  guessesOpen: boolean;
+  players: Array<{
+    id: string;
+    name: string;
+    status: PlayerStatus;
+    correctGuesses: number;
+  }>;
+};
+
+type RoundStartedPayload = {
+  roundIndex: number;
+  currentValue: number;
+  timerSeconds: number | null;
+};
+
+type RoundResolvedPayload = {
+  roundIndex: number;
+  correctAnswer: "higher" | "lower";
+  nextValue: number;
+  results: Array<{
+    playerId: string;
+    guessed: PlayerGuess;
+    correct: boolean;
+    status: PlayerStatus;
+  }>;
+  revived: boolean;
+  leaderboard: LobbySnapshot["players"];
+};
+
+type GuessSubmittedPayload = {
+  playerId: string;
+  guess: "higher" | "lower";
+};
+
+type SocketAck<T> = { ok: true; data?: T } | { ok: false; error: string };
 
 const GAME_KEY = "higherlower:game";
 const SESSION_KEY = "higherlower:session";
 const GAME_CODE_LENGTH = 6;
 const TIMER_DURATION_MS = 30000;
 const JOIN_PANEL_MAX_HEIGHT = 200;
+const SOCKET_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? "http://localhost:3001";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -49,10 +96,12 @@ export default function Home() {
   const [nextNumberInput, setNextNumberInput] = useState("");
   const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
   const [copyStatus, setCopyStatus] = useState("");
+  const [socketReady, setSocketReady] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
+  const lastReconnectRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Intentionally setting state on mount for animation purposes
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -61,10 +110,11 @@ export default function Home() {
       return;
     }
     const storedGame = window.localStorage.getItem(GAME_KEY);
+    let parsedGame: GameState | null = null;
     if (storedGame) {
       try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setGameState(JSON.parse(storedGame));
+        parsedGame = JSON.parse(storedGame) as GameState;
+        setGameState(parsedGame);
       } catch {
         window.localStorage.removeItem(GAME_KEY);
       }
@@ -72,7 +122,11 @@ export default function Home() {
     const storedSession = window.localStorage.getItem(SESSION_KEY);
     if (storedSession) {
       try {
-        setSession(JSON.parse(storedSession));
+        const parsedSession = JSON.parse(storedSession) as Session;
+        if (!parsedSession.code && parsedGame?.code) {
+          parsedSession.code = parsedGame.code;
+        }
+        setSession(parsedSession);
       } catch {
         window.localStorage.removeItem(SESSION_KEY);
       }
@@ -108,7 +162,6 @@ export default function Home() {
       return;
     }
     if (!gameState && session) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSession(null);
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(SESSION_KEY);
@@ -122,7 +175,6 @@ export default function Home() {
     }
     const hasPlayer = gameState.players.some((player) => player.id === session.playerId);
     if (!hasPlayer) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSession(null);
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(SESSION_KEY);
@@ -132,7 +184,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!gameState?.timerEndTime) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimerRemaining(null);
       return;
     }
@@ -148,7 +199,6 @@ export default function Home() {
 
   useEffect(() => {
     if (gameState?.stage === "reveal" && gameState.nextNumber !== null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentNumberInput(String(gameState.nextNumber));
       setNextNumberInput("");
     }
@@ -158,28 +208,32 @@ export default function Home() {
     }
   }, [gameState?.nextNumber, gameState?.stage]);
 
-  const persistGame = (next: GameState | null) => {
-    setGameState(next);
-    if (typeof window === "undefined") {
-      return;
-    }
-    if (next) {
-      window.localStorage.setItem(GAME_KEY, JSON.stringify(next));
-    } else {
-      window.localStorage.removeItem(GAME_KEY);
-    }
+  const persistGame = (next: GameState | null | ((prev: GameState | null) => GameState | null)) => {
+    setGameState((prev) => {
+      const resolved = typeof next === "function" ? next(prev) : next;
+      if (typeof window !== "undefined") {
+        if (resolved) {
+          window.localStorage.setItem(GAME_KEY, JSON.stringify(resolved));
+        } else {
+          window.localStorage.removeItem(GAME_KEY);
+        }
+      }
+      return resolved;
+    });
   };
 
-  const persistSession = (next: Session | null) => {
-    setSession(next);
-    if (typeof window === "undefined") {
-      return;
-    }
-    if (next) {
-      window.localStorage.setItem(SESSION_KEY, JSON.stringify(next));
-    } else {
-      window.localStorage.removeItem(SESSION_KEY);
-    }
+  const persistSession = (next: Session | null | ((prev: Session | null) => Session | null)) => {
+    setSession((prev) => {
+      const resolved = typeof next === "function" ? next(prev) : next;
+      if (typeof window !== "undefined") {
+        if (resolved) {
+          window.localStorage.setItem(SESSION_KEY, JSON.stringify(resolved));
+        } else {
+          window.localStorage.removeItem(SESSION_KEY);
+        }
+      }
+      return resolved;
+    });
   };
 
   const resetJoinState = () => {
@@ -189,60 +243,243 @@ export default function Home() {
     setCodeValue("");
   };
 
-  const createPlayerId = () => {
-    const cryptoApi = typeof window !== "undefined" ? window.crypto : undefined;
-    if (cryptoApi?.randomUUID) {
-      return cryptoApi.randomUUID();
-    }
-    if (cryptoApi?.getRandomValues) {
-      const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
-      bytes[6] = (bytes[6] & 0x0f) | 0x40;
-      bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      const hex = Array.from(bytes).map((byte) => byte.toString(16).padStart(2, "0"));
-      return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex
-        .slice(6, 8)
-        .join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10, 16).join("")}`;
-    }
-    const fallbackRandom = Array.from({ length: 3 })
-      .map(() => Math.random().toString(16).slice(2))
-      .join("");
-    return `${Date.now().toString(16)}-${fallbackRandom}`;
+  const buildPlayersFromSnapshot = (
+    snapshotPlayers: LobbySnapshot["players"],
+    existingPlayers: Player[] | null,
+    guessOverrides?: Map<string, PlayerGuess>
+  ) => {
+    const guessMap = new Map(existingPlayers?.map((player) => [player.id, player.guess]));
+    return snapshotPlayers.map((player) => ({
+      ...player,
+      guess: guessOverrides?.get(player.id) ?? guessMap.get(player.id) ?? null,
+    }));
   };
 
-  const handleCreateGame = () => {
-    const min = 10 ** (GAME_CODE_LENGTH - 1);
-    const max = 10 ** GAME_CODE_LENGTH;
-    const code = Math.floor(min + Math.random() * (max - min)).toString();
-    const newGame: GameState = {
-      code,
-      stage: "lobby",
-      round: 1,
-      currentNumber: null,
-      nextNumber: null,
-      timerEnabled: false,
-      timerEndTime: null,
-      players: [],
-      lastAnswer: null,
-      lastMessage: null,
-      winnerId: null,
+  const mapSnapshotToGame = (snapshot: LobbySnapshot, previous: GameState | null): GameState => {
+    const stage: Stage =
+      snapshot.roundIndex === 0 ? "lobby" : snapshot.guessesOpen ? "guessing" : "reveal";
+    const round = snapshot.roundIndex > 0 ? snapshot.roundIndex : 1;
+    const timerEndTime =
+      snapshot.guessesOpen && snapshot.timerSeconds
+        ? Date.now() + snapshot.timerSeconds * 1000
+        : null;
+    const currentNumber =
+      stage === "lobby"
+        ? null
+        : stage === "reveal"
+        ? snapshot.previousValue ?? previous?.currentNumber ?? null
+        : snapshot.currentValue;
+    const nextNumber = stage === "reveal" ? snapshot.currentValue ?? previous?.nextNumber ?? null : null;
+    const players = buildPlayersFromSnapshot(snapshot.players, previous?.players ?? null);
+    const winnerId = previous?.winnerId ?? null;
+    return {
+      code: snapshot.code,
+      stage: winnerId ? "ended" : stage,
+      round,
+      currentNumber,
+      nextNumber,
+      timerEnabled: previous?.timerEnabled ?? Boolean(snapshot.timerSeconds),
+      timerEndTime,
+      players,
+      lastAnswer: previous?.lastAnswer ?? null,
+      lastMessage: previous?.lastMessage ?? null,
+      winnerId,
     };
-    persistGame(newGame);
-    persistSession({ role: "host" });
-    setShowJoin(false);
-    resetJoinState();
+  };
+
+  const pushHostMessage = (message: string) => {
+    persistGame((prev) => (prev ? { ...prev, lastMessage: message } : prev));
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket"],
+      autoConnect: false,
+    });
+    socketRef.current = socket;
+
+    const handleConnect = () => setSocketReady(true);
+    const handleDisconnect = () => setSocketReady(false);
+
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("lobby:updated", (snapshot: LobbySnapshot) => {
+      persistGame((prev) => mapSnapshotToGame(snapshot, prev));
+    });
+    socket.on("round:started", (payload: RoundStartedPayload) => {
+      persistGame((prev) => {
+        if (!prev) {
+          return prev;
+        }
+        const updatedPlayers = prev.players.map((player) => ({ ...player, guess: null }));
+        return {
+          ...prev,
+          stage: "guessing",
+          round: payload.roundIndex,
+          currentNumber: payload.currentValue,
+          nextNumber: null,
+          timerEnabled: Boolean(payload.timerSeconds),
+          timerEndTime: payload.timerSeconds
+            ? Date.now() + payload.timerSeconds * 1000
+            : null,
+          players: updatedPlayers,
+          lastAnswer: null,
+          lastMessage: null,
+          winnerId: null,
+        };
+      });
+    });
+    socket.on("guess:submitted", (payload: GuessSubmittedPayload) => {
+      persistGame((prev) => {
+        if (!prev) {
+          return prev;
+        }
+        const updatedPlayers = prev.players.map((player) =>
+          player.id === payload.playerId ? { ...player, guess: payload.guess } : player
+        );
+        return { ...prev, players: updatedPlayers };
+      });
+    });
+    socket.on("round:resolved", (payload: RoundResolvedPayload) => {
+      persistGame((prev) => {
+        if (!prev) {
+          return prev;
+        }
+        const guessMap = new Map(
+          payload.results.map((result) => [result.playerId, result.guessed])
+        );
+        const updatedPlayers = buildPlayersFromSnapshot(
+          payload.leaderboard,
+          prev.players,
+          guessMap
+        );
+        const activePlayers = updatedPlayers.filter((player) => player.status === "in");
+        const hasWinner = activePlayers.length === 1;
+        const stage: Stage = hasWinner ? "ended" : "reveal";
+        const lastMessage = payload.revived
+          ? "Everyone was eliminated. Reviving all players for the next round."
+          : `${payload.correctAnswer === "higher" ? "Higher" : "Lower"} was correct.`;
+        return {
+          ...prev,
+          stage,
+          round: payload.roundIndex,
+          nextNumber: payload.nextValue,
+          timerEndTime: null,
+          lastAnswer: payload.correctAnswer,
+          lastMessage: hasWinner ? `${activePlayers[0].name} wins the game.` : lastMessage,
+          winnerId: hasWinner ? activePlayers[0].id : null,
+          players: updatedPlayers,
+        };
+      });
+    });
+    socket.on("game:ended", () => {
+      persistGame(null);
+      persistSession(null);
+      resetJoinState();
+    });
+
+    socket.connect();
+
+    return () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!socketReady || !session) {
+      if (!session) {
+        lastReconnectRef.current = null;
+      }
+      return;
+    }
+    const socket = socketRef.current;
+    const code = session.code ?? gameState?.code;
+    if (!socket || !code) {
+      return;
+    }
+    const reconnectKey = `${session.role}:${session.role === "player" ? session.playerId : "host"}:${code}`;
+    if (lastReconnectRef.current === reconnectKey) {
+      return;
+    }
+    lastReconnectRef.current = reconnectKey;
+    if (session.role === "host") {
+      socket.emit("host:reconnect", { code }, (response: SocketAck<LobbySnapshot>) => {
+        if (!response.ok) {
+          pushHostMessage(response.error);
+          return;
+        }
+        const snapshot = response.data;
+        if (!snapshot) {
+          pushHostMessage("Unable to reconnect to the host lobby.");
+          return;
+        }
+        persistGame((prev) => mapSnapshotToGame(snapshot, prev));
+      });
+      return;
+    }
+    socket.emit(
+      "player:reconnect",
+      { code, playerId: session.playerId },
+      (response: SocketAck<LobbySnapshot & { playerId: string }>) => {
+        if (!response.ok) {
+          setJoinError(response.error);
+          return;
+        }
+        const snapshot = response.data;
+        if (!snapshot) {
+          setJoinError("Unable to reconnect to that game.");
+          return;
+        }
+        persistGame((prev) => mapSnapshotToGame(snapshot, prev));
+      }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState?.code, session, socketReady]);
+
+  const handleCreateGame = () => {
+    const socket = socketRef.current;
+    if (!socket) {
+      setJoinError("Connecting to the game server. Try again in a moment.");
+      return;
+    }
+    socket.emit("lobby:create", {}, (response: SocketAck<{ code: string }>) => {
+      if (!response.ok) {
+        setJoinError(response.error);
+        return;
+      }
+      if (!response.data) {
+        setJoinError("Unable to create a new game.");
+        return;
+      }
+      const newGame: GameState = {
+        code: response.data.code,
+        stage: "lobby",
+        round: 1,
+        currentNumber: null,
+        nextNumber: null,
+        timerEnabled: false,
+        timerEndTime: null,
+        players: [],
+        lastAnswer: null,
+        lastMessage: null,
+        winnerId: null,
+      };
+      persistGame(newGame);
+      persistSession({ role: "host", code: response.data.code });
+      setShowJoin(false);
+      resetJoinState();
+    });
   };
 
   const handleJoinCode = () => {
-    if (!gameState) {
-      setJoinError("No active game found. Ask the host to start one.");
-      return;
-    }
-    if (gameState.stage !== "lobby") {
-      setJoinError("That game has already started. Try another code.");
-      return;
-    }
-    if (codeValue.trim() !== gameState.code) {
-      setJoinError("That code doesn't exist. Please check and try again.");
+    const trimmedCode = codeValue.trim();
+    if (trimmedCode.length !== GAME_CODE_LENGTH) {
+      setJoinError("Enter the 6-digit game code.");
       return;
     }
     setJoinError("");
@@ -250,8 +487,9 @@ export default function Home() {
   };
 
   const handleJoinGame = () => {
-    if (!gameState) {
-      setJoinError("No active game found. Ask the host to start one.");
+    const socket = socketRef.current;
+    if (!socket) {
+      setJoinError("Connecting to the game server. Try again in a moment.");
       return;
     }
     const trimmedName = playerName.trim();
@@ -259,30 +497,33 @@ export default function Home() {
       setJoinError("Add a display name before joining.");
       return;
     }
-    const newId = createPlayerId();
-    const existingPlayer = gameState.players.find((player) => player.name === trimmedName);
-    if (existingPlayer) {
-      setJoinError("That name is already taken. Choose another.");
+    const trimmedCode = codeValue.trim();
+    if (trimmedCode.length !== GAME_CODE_LENGTH) {
+      setJoinError("Enter the 6-digit game code.");
       return;
     }
-    const newPlayer: Player = {
-      id: newId,
-      name: trimmedName,
-      status: "in",
-      correctGuesses: 0,
-      guess: null,
-    };
-    const updatedPlayers = [...gameState.players, newPlayer];
-    persistGame({ ...gameState, players: updatedPlayers });
-    persistSession({ role: "player", playerId: newId });
-    resetJoinState();
+    socket.emit(
+      "player:join",
+      { code: trimmedCode, playerName: trimmedName },
+      (response: SocketAck<LobbySnapshot & { playerId: string }>) => {
+        if (!response.ok) {
+          setJoinError(response.error);
+          return;
+        }
+        const snapshot = response.data;
+        if (!snapshot) {
+          setJoinError("Unable to join that game.");
+          return;
+        }
+        persistGame((prev) => mapSnapshotToGame(snapshot, prev));
+        persistSession({ role: "player", playerId: snapshot.playerId, code: trimmedCode });
+        resetJoinState();
+      }
+    );
   };
 
   const handleToggleTimer = () => {
-    if (!gameState) {
-      return;
-    }
-    persistGame({ ...gameState, timerEnabled: !gameState.timerEnabled });
+    persistGame((prev) => (prev ? { ...prev, timerEnabled: !prev.timerEnabled } : prev));
   };
 
   const handleOpenGuessing = () => {
@@ -291,25 +532,37 @@ export default function Home() {
     }
     const currentValue = Number(currentNumberInput);
     if (!Number.isFinite(currentValue)) {
+      pushHostMessage("Enter a valid current number before opening guesses.");
       return;
     }
-    const updatedPlayers = gameState.players.map((player) => ({
-      ...player,
-      guess: null,
-    }));
-    const nextRound = gameState.stage === "reveal" ? gameState.round + 1 : gameState.round;
-    persistGame({
-      ...gameState,
-      stage: "guessing",
-      round: nextRound,
-      currentNumber: currentValue,
-      nextNumber: null,
-      timerEndTime: gameState.timerEnabled ? Date.now() + TIMER_DURATION_MS : null,
-      players: updatedPlayers,
-      lastAnswer: null,
-      lastMessage: null,
-      winnerId: null,
-    });
+    const socket = socketRef.current;
+    if (!socket) {
+      pushHostMessage("Connecting to the game server. Try again.");
+      return;
+    }
+    const timerSeconds = gameState.timerEnabled ? TIMER_DURATION_MS / 1000 : undefined;
+    const startRound = () => {
+      socket.emit(
+        "round:start",
+        { code: gameState.code, currentValue, timerSeconds },
+        (response: SocketAck<void>) => {
+          if (!response.ok) {
+            pushHostMessage(response.error);
+          }
+        }
+      );
+    };
+    if (gameState.stage === "lobby") {
+      socket.emit("game:start", { code: gameState.code }, (response: SocketAck<void>) => {
+        if (!response.ok) {
+          pushHostMessage(response.error);
+          return;
+        }
+        startRound();
+      });
+    } else {
+      startRound();
+    }
     setNextNumberInput("");
   };
 
@@ -319,46 +572,23 @@ export default function Home() {
     }
     const nextValue = Number(nextNumberInput);
     if (!Number.isFinite(nextValue)) {
+      pushHostMessage("Enter the next number before confirming the answer.");
       return;
     }
-    let updatedPlayers: Player[] = gameState.players.map((player): Player => {
-      const guessedCorrectly = player.guess === answer;
-      const increment = guessedCorrectly ? 1 : 0;
-      if (player.status === "in") {
-        if (!player.guess || !guessedCorrectly) {
-          return { ...player, status: "out" };
+    const socket = socketRef.current;
+    if (!socket) {
+      pushHostMessage("Connecting to the game server. Try again.");
+      return;
+    }
+    socket.emit(
+      "round:resolve",
+      { code: gameState.code, nextValue, correctAnswer: answer },
+      (response: SocketAck<void>) => {
+        if (!response.ok) {
+          pushHostMessage(response.error);
         }
       }
-      return {
-        ...player,
-        correctGuesses: player.correctGuesses + increment,
-      };
-    });
-    const activePlayers = updatedPlayers.filter((player) => player.status === "in");
-    let stage: Stage = "reveal";
-    let lastMessage = `${answer === "higher" ? "Higher" : "Lower"} was correct.`;
-    let winnerId: string | null = null;
-    if (activePlayers.length === 0) {
-      updatedPlayers = updatedPlayers.map(
-        (player): Player => ({ ...player, status: "in", guess: null })
-      );
-      lastMessage = "Everyone was eliminated. Reviving all players for the next round.";
-    }
-    if (activePlayers.length === 1) {
-      stage = "ended";
-      winnerId = activePlayers[0].id;
-      lastMessage = `${activePlayers[0].name} wins the game.`;
-    }
-    persistGame({
-      ...gameState,
-      stage,
-      nextNumber: nextValue,
-      timerEndTime: null,
-      lastAnswer: answer,
-      lastMessage,
-      winnerId,
-      players: updatedPlayers,
-    });
+    );
   };
 
   const handlePlayerGuess = (guess: "higher" | "lower") => {
@@ -368,25 +598,57 @@ export default function Home() {
     if (gameState.stage !== "guessing") {
       return;
     }
-    const updatedPlayers = gameState.players.map((player) => {
-      const canSubmitGuess = player.id === session.playerId && !player.guess;
-      return canSubmitGuess ? { ...player, guess } : player;
-    });
-    persistGame({ ...gameState, players: updatedPlayers });
+    const socket = socketRef.current;
+    if (!socket) {
+      setJoinError("Connecting to the game server. Try again.");
+      return;
+    }
+    const code = session.code ?? gameState.code;
+    socket.emit(
+      "guess:submit",
+      { code, playerId: session.playerId, guess },
+      (response: SocketAck<void>) => {
+        if (!response.ok) {
+          setJoinError(response.error);
+          return;
+        }
+        persistGame((prev) => {
+          if (!prev) {
+            return prev;
+          }
+          const updatedPlayers = prev.players.map((player) => {
+            const canSubmitGuess = player.id === session.playerId && !player.guess;
+            return canSubmitGuess ? { ...player, guess } : player;
+          });
+          return { ...prev, players: updatedPlayers };
+        });
+      }
+    );
   };
 
   const handleEndGame = () => {
+    const socket = socketRef.current;
+    const code = gameState?.code ?? session?.code;
+    if (socket && code) {
+      socket.emit("game:end", { code, reason: "host-ended" }, (response: SocketAck<void>) => {
+        if (!response.ok) {
+          pushHostMessage(response.error);
+          return;
+        }
+        persistGame(null);
+        persistSession(null);
+        resetJoinState();
+      });
+      return;
+    }
     persistGame(null);
     persistSession(null);
     resetJoinState();
   };
 
   const handleLeaveGame = () => {
-    if (gameState && session?.role === "player") {
-      const updatedPlayers = gameState.players.filter((player) => player.id !== session.playerId);
-      persistGame({ ...gameState, players: updatedPlayers });
-    }
     persistSession(null);
+    persistGame(null);
     resetJoinState();
   };
 
