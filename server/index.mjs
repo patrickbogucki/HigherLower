@@ -32,6 +32,11 @@ const joinSchema = z.object({
 const lockSchema = z.object({
   code: z.string().length(6),
 });
+const gameStartSchema = z.object({
+  code: z.string().length(6),
+  currentValue: z.number(),
+  timerSeconds: z.number().int().positive().max(300).optional(),
+});
 const roundStartSchema = z.object({
   code: z.string().length(6),
   currentValue: z.number(),
@@ -111,6 +116,24 @@ const emitLobbyUpdate = (session) => {
 const lockLobby = (session) => {
   session.locked = true;
   io.to(session.code).emit("lobby:locked", { code: session.code });
+  emitLobbyUpdate(session);
+};
+
+const startRound = (session, payload) => {
+  session.roundIndex += 1;
+  session.previousValue = session.currentValue;
+  session.currentValue = payload.currentValue;
+  session.timerSeconds = payload.timerSeconds ?? null;
+  session.guessesOpen = true;
+  session.correctAnswer = null;
+  session.players.forEach((player) => {
+    player.guess = null;
+  });
+  io.to(session.code).emit("round:started", {
+    roundIndex: session.roundIndex,
+    currentValue: session.currentValue,
+    timerSeconds: session.timerSeconds,
+  });
   emitLobbyUpdate(session);
 };
 
@@ -209,7 +232,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("game:start", (payload, ack) => {
-    const data = parsePayload(lockSchema, payload, ack);
+    const data = parsePayload(gameStartSchema, payload, ack);
     if (!data) {
       return;
     }
@@ -220,6 +243,7 @@ io.on("connection", (socket) => {
     }
     lockLobby(session);
     io.to(session.code).emit("game:started", { code: session.code });
+    startRound(session, data);
     sendAck(ack, { ok: true });
   });
 
@@ -233,21 +257,7 @@ io.on("connection", (socket) => {
       sendAck(ack, { ok: false, error: "Not authorized." });
       return;
     }
-    session.roundIndex += 1;
-    session.previousValue = session.currentValue;
-    session.currentValue = data.currentValue;
-    session.timerSeconds = data.timerSeconds ?? null;
-    session.guessesOpen = true;
-    session.correctAnswer = null;
-    session.players.forEach((player) => {
-      player.guess = null;
-    });
-    io.to(session.code).emit("round:started", {
-      roundIndex: session.roundIndex,
-      currentValue: session.currentValue,
-      timerSeconds: session.timerSeconds,
-    });
-    emitLobbyUpdate(session);
+    startRound(session, data);
     sendAck(ack, { ok: true });
   });
 

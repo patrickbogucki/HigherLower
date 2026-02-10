@@ -586,21 +586,37 @@ export default function Home() {
         setHostMessage(response.error);
       }
     };
-    if (gameState.stage === "lobby") {
+    const startRound = () => {
+      if (gameState.stage === "lobby") {
+        socket.emit("game:start", roundPayload, handleRoundStart);
+      } else {
+        socket.emit("round:start", roundPayload, handleRoundStart);
+      }
+    };
+    const ensureHost = () => {
+      if (session?.role !== "host") {
+        startRound();
+        return;
+      }
       socket.emit(
-        "game:start",
+        "host:reconnect",
         { code: gameState.code },
-        (response: SocketAckResponse<void>) => {
+        (response: SocketAckResponse<LobbySnapshot>) => {
           if (!response.ok) {
             setHostMessage(response.error);
             return;
           }
-          socket.emit("round:start", roundPayload, handleRoundStart);
+          startRound();
         }
       );
-    } else {
-      socket.emit("round:start", roundPayload, handleRoundStart);
+    };
+    if (!socket.connected) {
+      setHostMessage("Reconnecting to the game server...");
+      socket.once("connect", ensureHost);
+      socket.connect();
+      return;
     }
+    ensureHost();
     setNextNumberInput("");
   };
 
@@ -672,19 +688,45 @@ export default function Home() {
     const socket = socketRef.current;
     const code = gameState?.code ?? session?.code;
     if (socket && code) {
-      socket.emit(
-        "game:end",
-        { code, reason: "host-ended" },
-        (response: SocketAckResponse<void>) => {
-          if (!response.ok) {
-            setHostMessage(response.error);
-            return;
+      const endGame = () => {
+        socket.emit(
+          "game:end",
+          { code, reason: "host-ended" },
+          (response: SocketAckResponse<void>) => {
+            if (!response.ok) {
+              setHostMessage(response.error);
+              return;
+            }
+            persistGame(null);
+            persistSession(null);
+            resetJoinState();
           }
-          persistGame(null);
-          persistSession(null);
-          resetJoinState();
+        );
+      };
+      const ensureHost = () => {
+        if (session?.role !== "host") {
+          endGame();
+          return;
         }
-      );
+        socket.emit(
+          "host:reconnect",
+          { code },
+          (response: SocketAckResponse<LobbySnapshot>) => {
+            if (!response.ok) {
+              setHostMessage(response.error);
+              return;
+            }
+            endGame();
+          }
+        );
+      };
+      if (!socket.connected) {
+        setHostMessage("Reconnecting to the game server...");
+        socket.once("connect", ensureHost);
+        socket.connect();
+        return;
+      }
+      ensureHost();
       return;
     }
     setHostMessage("Unable to end the game because the session code is missing.");
