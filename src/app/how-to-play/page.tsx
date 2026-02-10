@@ -4,8 +4,6 @@ export default function HowToPlayPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap');
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         .opus5-body {
@@ -36,41 +34,6 @@ export default function HowToPlayPage() {
           z-index: 0;
         }
 
-        .top-nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 10;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 24px 48px;
-        }
-
-        .nav-logo {
-          font-family: 'Playfair Display', serif;
-          font-size: 26px;
-          font-weight: 700;
-          color: #d4af37;
-          letter-spacing: 3px;
-          text-transform: uppercase;
-          text-decoration: none;
-        }
-
-        .nav-link {
-          font-size: 12px;
-          color: rgba(232, 228, 221, 0.35);
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          font-weight: 500;
-          text-decoration: none;
-          transition: color 0.3s ease;
-        }
-
-        .nav-link:hover {
-          color: #d4af37;
-        }
 
         .main-container-5 {
           position: relative;
@@ -79,8 +42,9 @@ export default function HowToPlayPage() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
-          padding: 120px 24px 80px;
+          justify-content: flex-start;
+          padding: 0 24px 80px;
+          margin-top: 10px;
         }
 
         .hero-content {
@@ -169,7 +133,6 @@ export default function HowToPlayPage() {
         }
 
         @media (max-width: 640px) {
-          .top-nav { padding: 16px 24px; }
           .hero-title { font-size: 44px; }
         }
       `}</style>
