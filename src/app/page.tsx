@@ -1521,7 +1521,8 @@ export default function Home() {
         @media (max-width: 640px) {
           .hero-title { font-size: 48px; }
           .top-nav { padding: 16px 24px; }
-          .nav-links { display: none; }
+          .nav-links { display: flex; gap: 16px; }
+          .nav-link { font-size: 10px; letter-spacing: 1.5px; }
           .corner-bl, .corner-br { display: none; }
           .screen-title { font-size: 30px; }
           .game-header { align-items: flex-start; }
