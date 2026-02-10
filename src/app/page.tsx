@@ -968,7 +968,7 @@ export default function Home() {
 
         .nav-logo {
           font-family: 'Playfair Display', serif;
-          font-size: 16px;
+          font-size: 26px;
           font-weight: 700;
           color: #d4af37;
           letter-spacing: 3px;
