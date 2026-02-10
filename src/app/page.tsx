@@ -1549,7 +1549,6 @@ export default function Home() {
           <div className="nav-logo">H / L</div>
           <div className="nav-links">
             <span className="nav-link">How to Play</span>
-            <span className="nav-link">About</span>
           </div>
         </nav>
 
