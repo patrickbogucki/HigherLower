@@ -172,7 +172,6 @@ export default function Home() {
   const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
   const [copyStatus, setCopyStatus] = useState("");
   const [socketReady, setSocketReady] = useState(false);
-  const [localPlayerGuess, setLocalPlayerGuess] = useState<PlayerGuess>(null);
   const socketRef = useRef<Socket | null>(null);
   const lastReconnectRef = useRef<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
@@ -325,13 +324,6 @@ export default function Home() {
     }
   }, [gameState?.nextNumber, gameState?.stage]);
 
-  useEffect(() => {
-    if (gameState?.stage !== "guessing") {
-      setLocalPlayerGuess(null);
-      return;
-    }
-    setLocalPlayerGuess(null);
-  }, [gameState?.round, gameState?.stage]);
 
   const persistGame = useCallback(
     (next: GameState | null | ((prev: GameState | null) => GameState | null)) => {
@@ -761,7 +753,6 @@ export default function Home() {
           setJoinError(response.error);
           return;
         }
-        setLocalPlayerGuess(guess);
         persistGame((prev) => {
           if (!prev) {
             return prev;
@@ -853,7 +844,7 @@ export default function Home() {
     session?.role === "player"
       ? gameState?.players.find((player) => player.id === session.playerId)
       : null;
-  const effectivePlayerGuess = playerRecord?.guess ?? localPlayerGuess;
+  const effectivePlayerGuess = playerRecord?.guess ?? null;
   const submittedCount = gameState
     ? gameState.players.filter((player) => player.guess).length
     : 0;
@@ -869,11 +860,12 @@ export default function Home() {
     gameState.players.length > 0;
   const canResolve =
     Boolean(nextNumberInput.trim()) && gameState !== null && gameState.stage === "guessing";
-  const canSubmitPlayerGuess =
-    Boolean(gameState) &&
-    gameState.stage === "guessing" &&
-    session?.role === "player" &&
-    !effectivePlayerGuess;
+  const canSubmitPlayerGuess = Boolean(
+    gameState &&
+      session?.role === "player" &&
+      gameState.stage === "guessing" &&
+      !effectivePlayerGuess
+  );
 
   return (
     <>
@@ -1848,11 +1840,12 @@ export default function Home() {
                         {gameState?.currentNumber ?? "—"}
                       </div>
                     </div>
-                    {gameState?.timerEnabled &&
-                    gameState?.stage === "guessing" &&
-                    timerRemaining !== null ? (
-                      <div className="timer-pill">{timerRemaining}s left</div>
-                    ) : null}
+                    {gameState !== null &&
+                      gameState.timerEnabled &&
+                      gameState.stage === "guessing" &&
+                      timerRemaining !== null ? (
+                        <div className="timer-pill">{timerRemaining}s left</div>
+                      ) : null}
                   </div>
                   <div className="result-banner">
                     {gameState?.stage === "lobby"
