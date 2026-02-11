@@ -5,6 +5,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Higher or Lower",
   description: "The refined art of prediction. Outlast your rivals in the ultimate game of intuition.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
