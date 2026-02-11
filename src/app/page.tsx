@@ -1401,6 +1401,12 @@ export default function Home() {
           gap: 12px;
         }
 
+        .inline-actions-fill > .btn-gold {
+          flex: 1 1 auto;
+          width: 100%;
+          justify-content: center;
+        }
+
         .player-guess-actions {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1766,7 +1772,7 @@ export default function Home() {
                       <div className="round-number">{gameState?.round}</div>
                     </div>
                   </div>
-                  <div className="inline-actions">
+                  <div className="inline-actions inline-actions-fill">
                     <button
                       className="btn-gold"
                       onClick={handleOpenGuessing}
