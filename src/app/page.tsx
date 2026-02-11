@@ -1316,6 +1316,43 @@ export default function Home() {
           gap: 12px;
         }
 
+        .player-guess-actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .player-guess-actions > button {
+          flex: 1 1 0;
+        }
+
+        .player-guess-locked {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          align-items: stretch;
+        }
+
+        .selected-guess-button {
+          width: 100%;
+          cursor: default;
+          box-shadow: 0 0 0 2px rgba(244, 214, 117, 0.75), 0 12px 28px rgba(212, 175, 55, 0.35);
+          transform: translateY(-1px);
+        }
+
+        .selected-guess-button.btn-outline {
+          background: rgba(212, 175, 55, 0.12);
+          color: #f4d675;
+          border-color: rgba(244, 214, 117, 0.8);
+        }
+
+        .selected-guess-message {
+          text-align: center;
+          font-size: 11px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          color: rgba(232, 228, 221, 0.65);
+        }
+
         .status-chip {
           padding: 4px 10px;
           border-radius: 999px;
@@ -1866,22 +1903,38 @@ export default function Home() {
                     Choose higher or lower before the reveal.
                   </div>
                   {gameState?.stage === "guessing" ? (
-                    <div className="inline-actions">
-                      <button
-                        className="btn-gold"
-                        onClick={() => handlePlayerGuess("higher")}
-                        disabled={!canSubmitPlayerGuess}
-                      >
-                        Higher
-                      </button>
-                      <button
-                        className="btn-outline"
-                        onClick={() => handlePlayerGuess("lower")}
-                        disabled={!canSubmitPlayerGuess}
-                      >
-                        Lower
-                      </button>
-                    </div>
+                    effectivePlayerGuess ? (
+                      <div className="player-guess-locked">
+                        <button
+                          className={`${
+                            effectivePlayerGuess === "higher" ? "btn-gold" : "btn-outline"
+                          } selected-guess-button`}
+                          disabled
+                        >
+                          {effectivePlayerGuess === "higher" ? "Higher" : "Lower"}
+                        </button>
+                        <div className="selected-guess-message">
+                          Selected: {effectivePlayerGuess === "higher" ? "Higher" : "Lower"}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="inline-actions player-guess-actions">
+                        <button
+                          className="btn-gold"
+                          onClick={() => handlePlayerGuess("higher")}
+                          disabled={!canSubmitPlayerGuess}
+                        >
+                          Higher
+                        </button>
+                        <button
+                          className="btn-outline"
+                          onClick={() => handlePlayerGuess("lower")}
+                          disabled={!canSubmitPlayerGuess}
+                        >
+                          Lower
+                        </button>
+                      </div>
+                    )
                   ) : (
                     <div className="result-banner">
                       {gameState?.stage === "lobby"
