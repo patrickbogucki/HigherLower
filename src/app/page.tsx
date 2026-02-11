@@ -181,6 +181,7 @@ export default function Home() {
   const [nextNumberInput, setNextNumberInput] = useState("");
   const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
   const [copyStatus, setCopyStatus] = useState("");
+  const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
   const [socketReady, setSocketReady] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const lastReconnectRef = useRef<string | null>(null);
@@ -841,6 +842,19 @@ export default function Home() {
     resetJoinState();
   };
 
+  const handleRequestEndGame = () => {
+    setShowEndGameConfirm(true);
+  };
+
+  const handleCancelEndGame = () => {
+    setShowEndGameConfirm(false);
+  };
+
+  const handleConfirmEndGame = () => {
+    setShowEndGameConfirm(false);
+    handleEndGame();
+  };
+
   const handleLeaveGame = () => {
     persistSession(null);
     persistGame(null);
@@ -1261,6 +1275,35 @@ export default function Home() {
           background: rgba(212, 175, 55, 0.12);
         }
 
+        .btn-end-game {
+          border-color: rgba(235, 84, 84, 0.6);
+          color: rgba(242, 163, 163, 0.95);
+        }
+
+        .btn-end-game:hover:not(:disabled) {
+          background: rgba(235, 84, 84, 0.16);
+        }
+
+        .btn-danger {
+          padding: 12px 20px;
+          border-radius: 8px;
+          border: 1px solid rgba(235, 84, 84, 0.6);
+          background: linear-gradient(135deg, #f06a6a, #c44747);
+          color: #1b0a0a;
+          font-family: 'Inter', sans-serif;
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+          box-shadow: 0 10px 24px rgba(240, 106, 106, 0.25);
+          transform: translateY(-1px);
+        }
+
         .btn-ghost {
           padding: 12px 20px;
           border-radius: 8px;
@@ -1278,6 +1321,48 @@ export default function Home() {
 
         .btn-ghost:hover {
           color: #ffffff;
+        }
+
+        .modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(9, 9, 12, 0.78);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 50;
+          padding: 24px;
+        }
+
+        .modal-card {
+          width: min(420px, 100%);
+          background: rgba(15, 15, 20, 0.95);
+          border-radius: 16px;
+          border: 1px solid rgba(212, 175, 55, 0.2);
+          padding: 28px;
+          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .modal-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 24px;
+          font-weight: 700;
+          color: #f4d675;
+          margin-bottom: 10px;
+        }
+
+        .modal-body {
+          font-size: 13px;
+          color: rgba(232, 228, 221, 0.6);
+          line-height: 1.6;
+          margin-bottom: 22px;
+        }
+
+        .modal-actions {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+          flex-wrap: wrap;
         }
 
         .form-field {
@@ -1521,6 +1606,11 @@ export default function Home() {
           .corner-bl, .corner-br { display: none; }
           .screen-title { font-size: 30px; }
           .game-header { align-items: flex-start; }
+          .modal-actions {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -1652,6 +1742,9 @@ export default function Home() {
                     <button className="btn-outline" onClick={handleCopyCode}>
                       Copy
                     </button>
+                    <button className="btn-outline btn-end-game" onClick={handleRequestEndGame}>
+                      End Game
+                    </button>
                   </div>
                   {copyStatus ? <div className="code-copy">{copyStatus}</div> : null}
                 </div>
@@ -1680,9 +1773,6 @@ export default function Home() {
                       disabled={!canOpenGuessing}
                     >
                       {gameState?.stage === "lobby" ? "Start Round 1" : "Open Guessing"}
-                    </button>
-                    <button className="btn-outline" onClick={handleEndGame}>
-                      End Game
                     </button>
                   </div>
                   <label className="toggle-row">
@@ -1826,6 +1916,32 @@ export default function Home() {
                   )}
                 </div>
               </div>
+
+              {showEndGameConfirm ? (
+                <div
+                  className="modal-backdrop"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="end-game-title"
+                >
+                  <div className="modal-card">
+                    <div className="modal-title" id="end-game-title">
+                      End the game?
+                    </div>
+                    <p className="modal-body">
+                      This ends the session for everyone and clears the lobby state.
+                    </p>
+                    <div className="modal-actions">
+                      <button className="btn-outline" onClick={handleCancelEndGame}>
+                        Keep Playing
+                      </button>
+                      <button className="btn-danger" onClick={handleConfirmEndGame}>
+                        End Game
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="game-shell">
