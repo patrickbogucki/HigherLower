@@ -1355,6 +1355,15 @@ export default function Home() {
           gap: 12px;
         }
 
+        .player-guess-actions {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .player-guess-actions > button {
+          flex: 1 1 0;
+        }
+
         .status-chip {
           padding: 4px 10px;
           border-radius: 999px;
@@ -1908,7 +1917,7 @@ export default function Home() {
                     Choose higher or lower before the reveal.
                   </div>
                   {gameState?.stage === "guessing" ? (
-                    <div className="inline-actions">
+                    <div className="inline-actions player-guess-actions">
                       <button
                         className="btn-gold"
                         onClick={() => handlePlayerGuess("higher")}
