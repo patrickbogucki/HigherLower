@@ -1401,6 +1401,10 @@ export default function Home() {
           gap: 12px;
         }
 
+        .round-start-actions {
+          margin-top: 12px;
+        }
+
         .inline-actions-fill > .btn-gold {
           flex: 1 1 auto;
           width: 100%;
@@ -1772,15 +1776,6 @@ export default function Home() {
                       <div className="round-number">{gameState?.round}</div>
                     </div>
                   </div>
-                  <div className="inline-actions inline-actions-fill">
-                    <button
-                      className="btn-gold"
-                      onClick={handleOpenGuessing}
-                      disabled={!canOpenGuessing}
-                    >
-                      {gameState?.stage === "lobby" ? "Start Round 1" : "Open Guessing"}
-                    </button>
-                  </div>
                   <label className="toggle-row">
                     <input
                       type="checkbox"
@@ -1817,6 +1812,17 @@ export default function Home() {
                         onChange={(e) => setCurrentNumberInput(e.target.value)}
                         placeholder="Enter the current number"
                       />
+                    </div>
+                  ) : null}
+                  {gameState?.stage !== "guessing" && gameState?.stage !== "ended" ? (
+                    <div className="inline-actions inline-actions-fill round-start-actions">
+                      <button
+                        className="btn-gold"
+                        onClick={handleOpenGuessing}
+                        disabled={!canOpenGuessing}
+                      >
+                        {gameState?.stage === "lobby" ? "Start Round 1" : "Open Guessing"}
+                      </button>
                     </div>
                   ) : null}
                   {gameState?.stage === "guessing" ? (
