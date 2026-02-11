@@ -1,73 +1,29 @@
-# Suggested Tools and Architecture
+# Tools and Architecture
 
-## Recommended Tools
+This document reflects the actual codebase and deployment setup.
 
-### Product Design
-- **Figma** for UI mockups, component inventory, and interaction prototypes.
-- **FigJam** for mapping the multiplayer flow and round lifecycle.
+## Tools Used
 
 ### Frontend
-- **React + TypeScript** for a structured UI with typed state.
-- **Vite** for fast local development and builds.
-- **Tailwind CSS** for consistent spacing, typography, and component styling.
-- **Framer Motion** for round transitions, reveal animations, and status feedback.
-- **Lucide** (or Heroicons) for a cohesive icon set.
+- **Next.js** for the React application, routing, and production builds.
+- **React** for the host and player interfaces.
+- **TypeScript** for typed state, socket payloads, and safer UI logic.
+- **Tailwind CSS + PostCSS** for utility styling and build-time CSS processing.
 
-### Backend & Realtime
-- **Node.js + Express** for the game API and session management.
-- **Socket.IO** (or WebSocket API) for live lobby updates, guesses, and round reveals.
-- **Zod** for request and event payload validation.
+### Backend and Realtime
+- **Node.js** for the runtime that hosts the backend server.
+- **Express** for the HTTP server and health endpoint.
+- **Socket.IO** for realtime lobby updates, guesses, and round events.
+- **Zod** for server-side payload validation and error messaging.
 
-### Data & State
-- **Redis** for in-memory game session state and quick reconnection lookup (low-latency + TTL cleanup for short-lived games).
-- **PostgreSQL** (optional) for analytics, historical games, and audit logs.
-
-### Quality & DevOps
-- **Vitest** for unit tests and utility validation.
-- **Playwright** for end-to-end tests of host/player flows.
-- **ESLint + Prettier** for linting and formatting.
-- **GitHub Actions** for CI checks (lint, test, build).
+### Tooling and Quality
+- **ESLint** for linting and consistent code standards.
+- **Docker** (Dockerfile and docker-compose) for containerized local setup and deployment parity.
 
 ### Hosting
-- **Vercel** for the frontend.
-- **Render / Fly.io** for the Node.js server.
-- **Upstash Redis** for hosted Redis.
+- **Vercel** for the frontend hosting and builds.
+- **Render** for the backend hosting (Express + Socket.IO server).
 
-## Suggested Architecture
+## Codebase Architecture Summary
 
-### High-Level Overview
-- **Client-server model** with separate host and player UIs.
-- **Realtime event bus** (Socket.IO) for all game events.
-- **Central game session store** (Redis) keyed by 6-digit code.
-
-### Core Services
-1. **Lobby Service**
-   - Creates game codes and accepts join requests.
-   - Locks the lobby when the host starts the game.
-2. **Round Engine**
-   - Tracks current round, timers, and guess submissions.
-   - Resolves correct answers and eliminates players.
-3. **Leaderboard Service**
-   - Maintains player status (in/out) and correct guess counts.
-   - Publishes updates to all connected clients.
-4. **Reconnect Handler**
-   - Restores players or hosts to the correct round state.
-   - Applies elimination logic if a player misses a reveal.
-
-### Event Flow (Realtime)
-- `lobby:created` → broadcast game code.
-- `player:joined` → update lobby roster.
-- `round:started` → send timer + current round number.
-- `guess:submitted` → update host dashboard.
-- `round:resolved` → reveal correct answer and results.
-- `game:ended` → release code and show final screen.
-
-### State Model (Redis)
-- **Game session**: code, host socket, round index, timer settings.
-- **Players**: name, status, guess, score, last-seen timestamp.
-- **Round data**: current value, previous value, correct answer.
-
-### Resilience
-- Use heartbeats to detect disconnects.
-- Allow reconnect within a grace window.
-- Snapshots pushed on reconnect to avoid stale client state.
+The project is a client-server realtime game. The frontend is a Next.js app that renders host and player experiences, manages local session state, and connects to the backend over Socket.IO. The backend is an Express server with a Socket.IO gateway that owns game sessions in memory, validates all events with Zod, and broadcasts lobby and round updates to connected clients. Game state is stored in process memory (no external database or cache), so sessions reset when the server restarts. Round flow is driven by server events: lobby creation, player joins, round start, guesses, round resolve, and game end. The frontend reacts to these snapshots and updates UI state accordingly.
