@@ -168,6 +168,8 @@ const mapSnapshotToGame = (
   };
 };
 
+const isMissingSessionError = (error: string) => /not found/i.test(error);
+
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -377,6 +379,13 @@ export default function Home() {
     setCodeValue("");
   }, []);
 
+  const resetPersistedSessionState = useCallback(() => {
+    lastReconnectRef.current = null;
+    persistSession(null);
+    persistGame(null);
+    resetJoinState();
+  }, [persistGame, persistSession, resetJoinState]);
+
   const setHostMessage = useCallback(
     (message: string) => {
       persistGame((prev) => (prev ? { ...prev, lastMessage: message } : prev));
@@ -525,6 +534,10 @@ export default function Home() {
         { code },
         (response: SocketAckResponse<LobbySnapshot>) => {
           if (!response.ok) {
+            if (isMissingSessionError(response.error)) {
+              resetPersistedSessionState();
+              return;
+            }
             setHostMessage(response.error);
             return;
           }
@@ -538,13 +551,17 @@ export default function Home() {
       { code, playerId: session.playerId },
       (response: SocketAckResponse<PlayerJoinSnapshot>) => {
         if (!response.ok) {
+          if (isMissingSessionError(response.error)) {
+            resetPersistedSessionState();
+            return;
+          }
           setJoinError(response.error);
           return;
         }
         persistGame((prev) => mapSnapshotToGame(response.data, prev));
       }
     );
-  }, [gameState?.code, persistGame, setHostMessage, session, socketReady]);
+  }, [gameState?.code, persistGame, resetPersistedSessionState, setHostMessage, session, socketReady]);
 
   useEffect(() => {
     if (!session || session.role !== "player") {
@@ -820,6 +837,10 @@ export default function Home() {
           { code },
           (response: SocketAckResponse<LobbySnapshot>) => {
             if (!response.ok) {
+              if (isMissingSessionError(response.error)) {
+                resetPersistedSessionState();
+                return;
+              }
               setHostMessage(response.error);
               return;
             }
