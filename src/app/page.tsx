@@ -25,6 +25,8 @@ type GameState = {
   nextNumber: number | null;
   timerEnabled: boolean;
   timerEndTime: number | null;
+  hostConnected: boolean;
+  sessionExpiresAt: number | null;
   players: Player[];
   lastAnswer: PlayerGuess;
   lastMessage: string | null;
@@ -43,6 +45,8 @@ type LobbySnapshot = {
   currentValue: number | null;
   previousValue: number | null;
   guessesOpen: boolean;
+  hostConnected: boolean;
+  sessionExpiresAt: number | null;
   players: Array<{
     id: string;
     name: string;
@@ -161,6 +165,8 @@ const mapSnapshotToGame = (
     nextNumber,
     timerEnabled: previousGameState?.timerEnabled ?? Boolean(snapshot.timerSeconds),
     timerEndTime,
+    hostConnected: snapshot.hostConnected,
+    sessionExpiresAt: snapshot.sessionExpiresAt,
     players,
     lastAnswer: previousGameState?.lastAnswer ?? null,
     lastMessage: previousGameState?.lastMessage ?? null,
@@ -182,6 +188,7 @@ export default function Home() {
   const [currentNumberInput, setCurrentNumberInput] = useState("");
   const [nextNumberInput, setNextNumberInput] = useState("");
   const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
+  const [sessionExpiryRemaining, setSessionExpiryRemaining] = useState<number | null>(null);
   const [copyStatus, setCopyStatus] = useState("");
   const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
   const [socketReady, setSocketReady] = useState(false);
@@ -324,6 +331,22 @@ export default function Home() {
     const interval = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(interval);
   }, [gameState?.timerEndTime]);
+
+  useEffect(() => {
+    if (!gameState?.sessionExpiresAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSessionExpiryRemaining(null);
+      return;
+    }
+    const expiresAt = gameState.sessionExpiresAt;
+    const updateExpiry = () => {
+      const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+      setSessionExpiryRemaining(remaining);
+    };
+    updateExpiry();
+    const interval = window.setInterval(updateExpiry, 1000);
+    return () => window.clearInterval(interval);
+  }, [gameState?.sessionExpiresAt]);
 
   useEffect(() => {
     if (gameState?.stage === "reveal" && gameState.nextNumber !== null) {
@@ -601,6 +624,8 @@ export default function Home() {
         nextNumber: null,
         timerEnabled: false,
         timerEndTime: null,
+        hostConnected: true,
+        sessionExpiresAt: null,
         players: [],
         lastAnswer: null,
         lastMessage: null,
@@ -924,6 +949,11 @@ export default function Home() {
       gameState.stage === "guessing" &&
       !effectivePlayerGuess
   );
+  const formatSessionExpiry = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainder = seconds % 60;
+    return `${minutes}:${String(remainder).padStart(2, "0")}`;
+  };
 
   return (
     <>
@@ -2032,6 +2062,14 @@ export default function Home() {
                       ? `Winner: ${winnerName}`
                       : "Game complete."}
                   </div>
+                  {gameState !== null && !gameState.hostConnected ? (
+                    <div className="result-banner">
+                      Host disconnected.
+                      {sessionExpiryRemaining !== null
+                        ? ` Session expires in ${formatSessionExpiry(sessionExpiryRemaining)}.`
+                        : " Session expiration is pending."}
+                    </div>
+                  ) : null}
                   {playerRecord ? (
                     <div className="leaderboard-meta">
                       <span>{playerRecord.correctGuesses} correct</span>

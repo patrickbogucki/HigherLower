@@ -123,6 +123,8 @@ const sessionSnapshot = (session) => ({
   currentValue: session.currentValue,
   previousValue: session.previousValue,
   guessesOpen: session.guessesOpen,
+  hostConnected: Boolean(session.hostSocketId),
+  sessionExpiresAt: session.hostDisconnectExpiresAt,
   players: listPlayers(session),
 });
 
@@ -159,6 +161,7 @@ const clearHostTimeout = (session) => {
     clearTimeout(session.hostDisconnectTimer);
     session.hostDisconnectTimer = null;
   }
+  session.hostDisconnectExpiresAt = null;
 };
 
 const cleanupSession = (session, reason) => {
@@ -200,6 +203,7 @@ io.on("connection", (socket) => {
       players: new Map(),
       createdAt: Date.now(),
       hostDisconnectTimer: null,
+      hostDisconnectExpiresAt: null,
     };
     sessions.set(code, session);
     socket.join(code);
@@ -411,6 +415,7 @@ io.on("connection", (socket) => {
     clearHostTimeout(session);
     socket.join(session.code);
     sendAck(ack, { ok: true, data: sessionSnapshot(session) });
+    emitLobbyUpdate(session);
   });
 
   socket.on("player:heartbeat", (payload) => {
@@ -448,9 +453,11 @@ io.on("connection", (socket) => {
       if (session.hostSocketId === socket.id) {
         session.hostSocketId = null;
         clearHostTimeout(session);
+        session.hostDisconnectExpiresAt = Date.now() + SESSION_TTL_MS;
         session.hostDisconnectTimer = setTimeout(() => {
           cleanupSession(session, "host-timeout");
         }, SESSION_TTL_MS);
+        emitLobbyUpdate(session);
       }
       session.players.forEach((player) => {
         if (player.socketId === socket.id) {
