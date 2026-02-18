@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  basePath: "/game",
+  output: "standalone"
 };
 
 export default nextConfig;
