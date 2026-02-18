@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Higher or Lower",
   description: "The refined art of prediction. Outlast your rivals in the ultimate game of intuition.",
   icons: {
-    icon: "/favicon.svg",
+    icon: "favicon.svg",
   },
 };
 
